@@ -15,6 +15,8 @@ node_modules
 .DS_Store
 next-env.d.ts
 tsconfig.tsbuildinfo
+AGENTS.md
+CLAUDE.md
 
 # Local dev/worktree scratch
 .worktrees/
