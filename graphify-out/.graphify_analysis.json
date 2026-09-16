@@ -1,0 +1,338 @@
+{
+  "communities": {
+    "0": [
+      "app_page",
+      "app_page_avatar",
+      "app_page_chatsview",
+      "app_page_classnames",
+      "app_page_conversations",
+      "app_page_currentuser",
+      "app_page_emptystate",
+      "app_page_expiry",
+      "app_page_friendsview",
+      "app_page_homeview",
+      "app_page_message",
+      "app_page_mobilemenu",
+      "app_page_mobilenav",
+      "app_page_notificationpopover",
+      "app_page_onboarding",
+      "app_page_page",
+      "app_page_post",
+      "app_page_postcard",
+      "app_page_posts",
+      "app_page_profileview",
+      "app_page_reaction",
+      "app_page_reactionoptions",
+      "app_page_reportsview",
+      "app_page_requestsview",
+      "app_page_residents",
+      "app_page_rightrail",
+      "app_page_sidebar",
+      "app_page_user",
+      "app_page_view"
+    ],
+    "1": [
+      "base_ui_react",
+      "class_variance_authority",
+      "clsx",
+      "lucide_react",
+      "package_dependencies",
+      "package_dependencies_base_ui_react",
+      "package_dependencies_class_variance_authority",
+      "package_dependencies_clsx",
+      "package_dependencies_lucide_react",
+      "package_dependencies_next",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_dependencies_shadcn",
+      "package_dependencies_tailwind_merge",
+      "package_dependencies_tw_animate_css",
+      "package_dependencies_vercel_analytics",
+      "package_json_next",
+      "react",
+      "react_dom",
+      "shadcn",
+      "tailwind_merge",
+      "tw_animate_css",
+      "vercel_analytics"
+    ],
+    "2": [
+      "ref_dom",
+      "ref_dom_iterable",
+      "ref_esnext",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_allowjs",
+      "tsconfig_compileroptions_esmoduleinterop",
+      "tsconfig_compileroptions_incremental",
+      "tsconfig_compileroptions_isolatedmodules",
+      "tsconfig_compileroptions_jsx",
+      "tsconfig_compileroptions_lib",
+      "tsconfig_compileroptions_module",
+      "tsconfig_compileroptions_moduleresolution",
+      "tsconfig_compileroptions_noemit",
+      "tsconfig_compileroptions_paths",
+      "tsconfig_compileroptions_plugins",
+      "tsconfig_compileroptions_resolvejsonmodule",
+      "tsconfig_compileroptions_skiplibcheck",
+      "tsconfig_compileroptions_strict",
+      "tsconfig_compileroptions_target"
+    ],
+    "3": [
+      "components",
+      "components_aliases",
+      "components_aliases_components",
+      "components_aliases_hooks",
+      "components_aliases_lib",
+      "components_aliases_ui",
+      "components_aliases_utils",
+      "components_iconlibrary",
+      "components_rsc",
+      "components_schema",
+      "components_style",
+      "components_tailwind",
+      "components_tailwind_basecolor",
+      "components_tailwind_config",
+      "components_tailwind_css",
+      "components_tailwind_cssvariables",
+      "components_tailwind_prefix",
+      "components_tsx"
+    ],
+    "4": [
+      "package_devdependencies",
+      "package_devdependencies_postcss",
+      "package_devdependencies_tailwindcss",
+      "package_devdependencies_tailwindcss_postcss",
+      "package_devdependencies_types_node",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "postcss",
+      "tailwindcss",
+      "tailwindcss_postcss",
+      "types_node",
+      "types_react",
+      "types_react_dom",
+      "typescript"
+    ],
+    "5": [
+      "package",
+      "package_name",
+      "package_packagemanager",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_start",
+      "package_version"
+    ],
+    "6": [
+      "ref_next_dev_types_ts",
+      "ref_next_env_d_ts",
+      "ref_next_types_ts",
+      "ref_node_modules",
+      "ref_ts",
+      "ref_tsx",
+      "tsconfig",
+      "tsconfig_exclude",
+      "tsconfig_include"
+    ],
+    "7": [
+      "components_ui_button",
+      "components_ui_button_button",
+      "components_ui_button_buttonvariants",
+      "lib_utils",
+      "lib_utils_cn"
+    ],
+    "8": [
+      "app_layout",
+      "app_layout_metadata",
+      "app_layout_rootlayout",
+      "app_layout_viewport"
+    ],
+    "9": [
+      "postcss_config",
+      "postcss_config_config",
+      "postcss_load_config"
+    ],
+    "10": [
+      "next_config",
+      "next_config_nextconfig"
+    ],
+    "11": [
+      "pnpm_workspace_config",
+      "pnpm_workspace_minimumreleaseageexclude"
+    ],
+    "12": [
+      "public_placeholder_jpg_genericplaceholderimage",
+      "public_placeholder_svg_genericplaceholderimage"
+    ],
+    "13": [
+      "public_placeholder_logo_png_asset",
+      "public_placeholder_logo_svg_asset"
+    ],
+    "14": [
+      "next_next"
+    ],
+    "15": [
+      "public_apple_icon_appleiconasset"
+    ],
+    "16": [
+      "public_icon_appicon"
+    ],
+    "17": [
+      "public_icon_dark_32x32_appicondark"
+    ],
+    "18": [
+      "public_icon_light_32x32_appicon"
+    ],
+    "19": [
+      "public_placeholder_user_useravatarplaceholder"
+    ]
+  },
+  "cohesion": {
+    "0": 0.06896551724137931,
+    "1": 0.08695652173913043,
+    "2": 0.10526315789473684,
+    "3": 0.1111111111111111,
+    "4": 0.13333333333333333,
+    "5": 0.2222222222222222,
+    "6": 0.2222222222222222,
+    "7": 0.7,
+    "8": 0.5,
+    "9": 0.6666666666666666,
+    "10": 1.0,
+    "11": 1.0,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0,
+    "19": 1.0
+  },
+  "gods": [
+    {
+      "id": "tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 16
+    },
+    {
+      "id": "components_tailwind",
+      "label": "tailwind",
+      "degree": 6
+    },
+    {
+      "id": "components_aliases",
+      "label": "aliases",
+      "degree": 6
+    },
+    {
+      "id": "tsconfig_include",
+      "label": "include",
+      "degree": 6
+    },
+    {
+      "id": "components_ui_button_button",
+      "label": "Button()",
+      "degree": 4
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 4
+    },
+    {
+      "id": "tsconfig_compileroptions_lib",
+      "label": "lib",
+      "degree": 4
+    },
+    {
+      "id": "lib_utils_cn",
+      "label": "cn()",
+      "degree": 3
+    },
+    {
+      "id": "components_ui_button_buttonvariants",
+      "label": "buttonVariants",
+      "degree": 2
+    },
+    {
+      "id": "package_dependencies_base_ui_react",
+      "label": "@base-ui/react",
+      "degree": 2
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Button()",
+      "target": "cn()",
+      "source_files": [
+        "components/ui/button.tsx",
+        "lib/utils.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "Placeholder Logo (PNG)",
+      "target": "Placeholder Logo (SVG)",
+      "source_files": [
+        "public/placeholder-logo.png",
+        "public/placeholder-logo.svg"
+      ],
+      "confidence": "INFERRED",
+      "relation": "semantically_similar_to",
+      "why": "inferred connection - not explicitly stated in source; semantically similar concepts with no structural link"
+    },
+    {
+      "source": "Generic Placeholder Image (SVG)",
+      "target": "Generic Placeholder Image (JPG)",
+      "source_files": [
+        "public/placeholder.svg",
+        "public/placeholder.jpg"
+      ],
+      "confidence": "INFERRED",
+      "relation": "INFERRED",
+      "why": "inferred connection - not explicitly stated in source"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `dependencies` connect `Community 1` to `Community 5`?",
+      "why": "High betweenness centrality (0.070) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `devDependencies` connect `Community 4` to `Community 5`?",
+      "why": "High betweenness centrality (0.050) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `compilerOptions` connect `Community 2` to `Community 6`?",
+      "why": "High betweenness centrality (0.029) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `metadata`, `viewport`, `View` to the rest of the system?",
+      "why": "87 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.08695652173913043 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.10526315789473684 - nodes in this community are weakly interconnected."
+    }
+  ]
+}
