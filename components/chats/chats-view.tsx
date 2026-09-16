@@ -82,18 +82,27 @@ export function ChatsView({ profile }: { profile: UserProfile }) {
   async function startConversationWith(other: { uid: string; name: string }) {
     const id = conversationId(profile.uid, other.uid)
     const ref = doc(db, 'conversations', id)
-    const existing = await getDoc(ref)
-    if (!existing.exists()) {
-      await setDoc(ref, {
-        participantIds: [profile.uid, other.uid],
-        participantNames: { [profile.uid]: profile.name, [other.uid]: other.name },
-        lastMessage: '',
-        lastMessageAt: serverTimestamp(),
-        lastReadAt: {},
-      })
+    try {
+      const existing = await getDoc(ref)
+      if (!existing.exists()) {
+        await setDoc(ref, {
+          participantIds: [profile.uid, other.uid],
+          participantNames: { [profile.uid]: profile.name, [other.uid]: other.name },
+          lastMessage: '',
+          lastMessageAt: serverTimestamp(),
+          lastReadAt: {},
+        })
+      }
+      setSelectedId(id)
+      setStarting(false)
+    } catch (err) {
+      // Requires firestore.rules' conversations read rule to allow
+      // resource == null (a brand-new conversation id) — if this still
+      // throws permission-denied, the deployed rules haven't picked up
+      // that fix yet. Logged rather than silently swallowed so a stale
+      // rules deploy is visible instead of looking like a dead button.
+      console.error('Could not start conversation:', err)
     }
-    setSelectedId(id)
-    setStarting(false)
   }
 
   async function sendMessage() {

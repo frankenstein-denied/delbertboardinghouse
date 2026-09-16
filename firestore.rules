@@ -74,7 +74,20 @@ service cloud.firestore {
 
     // conversations/{id} — id is the two participant uids, sorted and joined with "_".
     match /conversations/{conversationId} {
-      allow read: if isSignedIn() && request.auth.uid in resource.data.participantIds;
+      // `resource == null` short-circuit is required for the "does this
+      // conversation already exist?" getDoc() check in startConversationWith
+      // (chats-view.tsx) to work at all: Firestore's rules engine sets
+      // `resource` to null for a document that doesn't exist yet, and
+      // evaluating `resource.data.participantIds` on a null resource throws
+      // a rules-evaluation error — which Firestore treats as a DENIED read,
+      // not as "not found." Without this clause, getDoc() on a brand-new
+      // conversation id rejects with permission-denied instead of resolving
+      // to a snapshot with .exists() === false, so the whole "start a new
+      // chat" flow silently breaks (the unhandled rejection stops execution
+      // before setSelectedId/setStarting ever run). Allowing the read when
+      // resource is null is safe: there is no data to leak from a document
+      // that doesn't exist, it just resolves to "not found" as intended.
+      allow read: if isSignedIn() && (resource == null || request.auth.uid in resource.data.participantIds);
       // participantNames[caller's own uid] is validated against the
       // caller's own profile doc, for the same impersonation reason as
       // posts/create above — the creator otherwise fully controls what
