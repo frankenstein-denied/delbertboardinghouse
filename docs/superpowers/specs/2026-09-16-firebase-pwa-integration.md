@@ -64,7 +64,6 @@ users/{uid}
   program: string
   room: string
   initials: string
-  role: 'resident' | 'admin'
   online: boolean
   createdAt: Timestamp
   // No `friends: string[]` field. Accepting a friend request would need to
@@ -87,8 +86,8 @@ posts/{postId}
   createdAt: Timestamp
   expiresAt: Timestamp        // createdAt + 24h, TTL field
 
-reports/{reportId}
-  authorId: string
+reports/{reportId}          // public (readable by any signed-in resident), rendered anonymously — authorId
+  authorId: string           // never displayed, kept only so the create rule can check ownership
   type: string
   reason: string
   description: string
@@ -118,7 +117,7 @@ friendRequests/{requestId}          // id = `${fromUid}_${toUid}`
 
 - **Comments backend.** The mock UI shows a comment *count* on posts but has no comment thread UI to open one. Building a full comments feature the UI never surfaces would be speculative. `commentsCount` stays a static denormalized field, uninitialized to 0; no comment CRUD.
 - **Push notifications / background sync.** Not requested; the service worker caches the app shell only.
-- **Admin console / report-review UI.** The user asked for reports to auto-delete and for rules; no UI to browse reports as an admin was requested. `role: 'admin'` exists in the data model and rules only so the rules can express "reports are private except to admins" per the existing UI copy ("Reports are private").
+- **No role-based accounts, no admin, no hidden dashboards.** Revised after initial build: the user decided against an admin/private-reports model entirely — "easier to maintain, no role based accounts, everyone is a user." `role` was removed from `UserProfile` and from `firestore.rules` (along with the `myRole()`/`isAdmin()` helpers); `reports` are readable by any signed-in resident (`allow read: if isSignedIn();`) and rendered anonymously in the UI — `authorId` stays in the document only to satisfy the create rule's ownership check, never displayed. `ReportsView` shows a live list of all active reports as cards (styled like Freedom Wall posts) below the submission form, not just the submitter's own.
 - **New test framework.** The repo has no test runner, no test files, and no CI today (`package.json` has no `test` script; `next.config.mjs` even sets `typescript.ignoreBuildErrors: true`), and this is a rapid-prototype v0-generated codebase. Standing up Jest/Vitest + Firebase Emulator Suite is a substantial, unrequested infrastructure project of its own. **Verification per task in the implementation plan is `npm run build` (Next's own type-check + compile) plus manual code-level review** — not automated tests. This is a deliberate deviation from this org's usual TDD default; task reviewers should not flag "no tests" as a defect for this plan.
 - **Live end-to-end testing against real Firebase.** The user has not created a Firebase project yet ("I'll input credentials later"). No task in this plan can be verified against a live Auth/Firestore backend. Code must fail gracefully (clear error, not a white-screen crash) when env vars are placeholder/missing, but functional correctness of the Firebase wiring is a code-review judgment call, not an executed test, until the user supplies real credentials.
 - **`NotificationPopover`'s hardcoded content.** Not named in the request; left as decorative mock content to avoid uncontrolled scope growth.

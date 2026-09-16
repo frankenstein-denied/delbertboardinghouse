@@ -52,15 +52,7 @@ field → "Enable TTL".) Firestore describes TTL deletion as happening
 already filter out expired documents immediately, so this step is only
 about eventually reclaiming storage, not about what residents see.
 
-## 6. (Optional) Promote an admin
-
-Reports are readable by their author and by `role == 'admin'` users only.
-To make a resident an admin after they've signed up once (so their `users/{uid}`
-doc exists): Console → Firestore Database → `users` → their doc → edit the
-`role` field from `resident` to `admin`. There is no in-app UI for this
-(not requested) — it's a one-off manual edit.
-
-## 7. Composite index for the chats list
+## 6. Composite index for the chats list
 
 Every query in this app filters/sorts on a single field except one: the
 conversation list (`components/chats/chats-view.tsx`) filters by
