@@ -1,0 +1,14 @@
+{
+  "name": "Delbert — Your boarding house community",
+  "short_name": "Delbert",
+  "description": "A private, friendly community space for Delbert housemates.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/icon-light-32x32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/apple-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}

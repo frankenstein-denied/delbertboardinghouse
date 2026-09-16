@@ -15,6 +15,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
+import { InstallButton } from '@/components/pwa/install-button'
 import { AuthProvider, useAuth } from '@/lib/auth-context'
 import { LoginView } from '@/components/auth/login-view'
 import { HomeView } from '@/components/home/home-view'
@@ -82,6 +83,7 @@ function Sidebar({ view, onNavigate, profile }: { view: View; onNavigate: (view:
     <p className="sidebar-kicker">THE BOARDING HOUSE COMMUNITY</p>
     <nav className="sidebar-nav">{items.map(({ id, label, icon: Icon, badge }) => <button key={id} className={view === id ? 'nav-item active' : 'nav-item'} onClick={() => onNavigate(id)}><Icon /> <span>{label}</span>{badge && <b>{badge}</b>}</button>)}</nav>
     <div className="sidebar-bottom">
+      <InstallButton />
       <button className="nav-item"><Settings /> <span>Settings</span></button>
       <button className="side-user" onClick={() => onNavigate('profile')}><Avatar profile={profile} /><span><strong>{profile.name}</strong><small>{profile.program} · {profile.room}</small></span><MoreHorizontal /></button>
     </div>
