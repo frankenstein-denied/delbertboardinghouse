@@ -79,7 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       program: details.program,
       room: details.room,
       initials: initialsFor(details.name),
-      role: 'resident',
       online: true,
       createdAt: serverTimestamp(),
     })
@@ -98,7 +97,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // existing loading/profile gate already falls back to LoginView for a
     // genuinely-missing profile, which is the correct behavior for that
     // rarer case.
-    await setDoc(doc(db, 'users', credential.user.uid), { online: true }, { merge: true })
+    // `uid` is included even though it never changes: Firestore evaluates
+    // set(..., {merge:true}) against a nonexistent doc as a *create*, not an
+    // update, so the missing-profile case above must satisfy the create
+    // rule's `request.resource.data.uid == uid` check too.
+    await setDoc(doc(db, 'users', credential.user.uid), { uid: credential.user.uid, online: true }, { merge: true })
   }
 
   async function logOut() {

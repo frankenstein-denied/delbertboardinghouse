@@ -1,14 +1,11 @@
 import type { Timestamp } from 'firebase/firestore'
 
-export type Role = 'resident' | 'admin'
-
 export interface UserProfile {
   uid: string
   name: string
   program: string
   room: string
   initials: string
-  role: Role
   online: boolean
   createdAt: Timestamp
 }
@@ -41,7 +38,11 @@ export interface ReportDoc {
   type: string
   reason: string
   description: string
-  createdAt: Timestamp
+  // Nullable: onSnapshot can deliver this doc (the latency-compensated local
+  // write) before the serverTimestamp() round-trip resolves it to a real
+  // value — callers deriving a relative/absolute time from this must
+  // null-guard rather than assume it's always set.
+  createdAt: Timestamp | null
   expiresAt: Timestamp
 }
 

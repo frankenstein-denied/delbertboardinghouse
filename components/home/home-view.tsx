@@ -5,11 +5,8 @@ import {
   BookOpen,
   ChevronDown,
   Heart,
-  Image as ImageIcon,
   MessageCircle,
   MoreHorizontal,
-  Paperclip,
-  Send,
   SmilePlus,
   Sparkles,
 } from 'lucide-react'
@@ -123,9 +120,7 @@ export function HomeView({ profile }: { profile: UserProfile }) {
           <textarea value={composer} onChange={(e) => setComposer(e.target.value)} placeholder={`What's happening, ${profile.name.split(' ')[0]}?`} />
         </div>
         <div className="composer-actions">
-          <button type="button" disabled><ImageIcon /> Photo</button>
           <button type="button" disabled><SmilePlus /> Feeling</button>
-          <button type="button" disabled><Paperclip /> Add file</button>
           <Button size="sm" disabled={!composer.trim() || posting} onClick={submitPost}>{posting ? 'Posting…' : 'Post'}</Button>
         </div>
       </div>
@@ -188,18 +183,33 @@ function PostCard({ post, myUid, activeReaction, setActiveReaction }: {
         )}
       </div>
       <button type="button" disabled><MessageCircle /> Comment</button>
-      <button type="button" disabled><Send /> Share</button>
     </div>
   </article>
 }
 
 function RightRail() {
+  // Not per-user — "who's online" is a single global query, so the
+  // dependency array is empty rather than keyed on anything per-render.
+  const onlineQuery = useMemo(() => query(collection(db, 'users'), where('online', '==', true)), [])
+  const { data: onlineUsers } = useCollection<UserProfile>(onlineQuery)
+
   return <aside className="right-rail">
+    <div className="rail-card card">
+      <div className="rail-title"><span>HOUSE PULSE</span><span className="live-dot">● LIVE</span></div>
+      <div className="pulse-row">
+        <span className="pulse-number">{onlineUsers.length}</span>
+        <span>resident{onlineUsers.length === 1 ? '' : 's'} online<br /><small>Someone&apos;s always around</small></span>
+      </div>
+      <div className="online-avatars">
+        {onlineUsers.slice(0, 6).map((u) => <Avatar key={u.uid} profile={u} size="sm" />)}
+        {onlineUsers.length > 6 && <span>+{onlineUsers.length - 6}</span>}
+      </div>
+    </div>
     <div className="rail-card card">
       <div className="rail-title"><span>QUICK NOTES</span><BookOpen /></div>
       <div className="note-row"><span className="note-dot orange" /><p><strong>Quiet hours</strong><small>10:00 PM – 7:00 AM</small></p></div>
-      <div className="note-row"><span className="note-dot blue" /><p><strong>Kitchen clean-up</strong><small>Assigned to Room 201</small></p></div>
-      <div className="note-row"><span className="note-dot purple" /><p><strong>Wi-Fi password</strong><small>Ask the house admin</small></p></div>
+      <div className="note-row"><span className="note-dot blue" /><p><strong>House Rules</strong><small>Be kind, clean up after yourself</small></p></div>
+      <div className="note-row"><span className="note-dot purple" /><p><strong>Wi-Fi password</strong><small>Ask a housemate</small></p></div>
     </div>
     <div className="rail-quote"><span>&ldquo;</span><p>Small house, big stories.</p><small>— The Delbert house rule</small></div>
   </aside>

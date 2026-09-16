@@ -11,25 +11,16 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
-    function myRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-
-    function isAdmin() {
-      return isSignedIn() && myRole() == 'admin';
-    }
-
     // users/{uid} — one profile doc per resident.
     match /users/{uid} {
       allow read: if isSignedIn();
       allow create: if isSelf(uid)
-        && request.resource.data.uid == uid
-        && request.resource.data.role == 'resident';
-      // Role and uid are immutable after creation — otherwise any resident
-      // could self-promote to admin and read every private report.
+        && request.resource.data.uid == uid;
+      // uid is immutable after creation — otherwise a resident could rewrite
+      // their profile doc's uid to impersonate another resident's identity
+      // in every place that trusts this field (posts, reports, messages).
       allow update: if isSelf(uid)
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.role == resource.data.role;
+        && request.resource.data.uid == resource.data.uid;
       allow delete: if false;
     }
 
@@ -68,9 +59,11 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // reports/{reportId} — private: author + admin only. 24h TTL via `expiresAt`.
+    // reports/{reportId} — public, anonymous — readable by any signed-in
+    // resident; `authorId` stays in the doc only to prove ownership on
+    // create, the UI never displays it. 24h TTL via `expiresAt`.
     match /reports/{reportId} {
-      allow read: if isSignedIn() && (resource.data.authorId == request.auth.uid || isAdmin());
+      allow read: if isSignedIn();
       // Same expiresAt server-clock bound as posts/create above.
       allow create: if isSignedIn()
         && request.resource.data.authorId == request.auth.uid
