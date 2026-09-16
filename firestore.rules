@@ -96,9 +96,22 @@ service cloud.firestore {
       // person, retroactively exposing (or locking someone out of) the
       // entire prior message history via the messages subcollection's own
       // rules below, which trust this document's *current* participantIds.
+      //
+      // Only lastMessage/lastMessageAt/lastReadAt may ever change after
+      // creation (participantNames is frozen too, tightening a latent gap
+      // noticed while adding this rule — nothing legitimate needs to change
+      // it post-creation). lastReadAt updates are further scoped to the
+      // caller's own key in that map, the same map-diff pattern as
+      // posts/reactions above, so a participant can only ever mark THEIR OWN
+      // read cursor, never spoof the other side's.
       allow update: if isSignedIn()
         && request.auth.uid in resource.data.participantIds
-        && request.resource.data.participantIds == resource.data.participantIds;
+        && request.resource.data.participantIds == resource.data.participantIds
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'lastMessageAt', 'lastReadAt'])
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastReadAt'])
+          || request.resource.data.lastReadAt.diff(resource.data.lastReadAt).affectedKeys().hasOnly([request.auth.uid])
+        );
       allow delete: if false;
 
       // messages/{messageId} — 4h TTL via `expiresAt`.

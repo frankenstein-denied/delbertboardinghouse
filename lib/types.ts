@@ -50,7 +50,15 @@ export interface ConversationDoc {
   participantIds: string[]
   participantNames: Record<string, string>
   lastMessage: string
-  lastMessageAt: Timestamp
+  // Nullable: onSnapshot can deliver this doc (the latency-compensated local
+  // write) before the serverTimestamp() round-trip resolves it to a real
+  // value — callers deriving a relative/absolute time from this must
+  // null-guard rather than assume it's always set.
+  lastMessageAt: Timestamp | null
+  // Per-participant "read up to" cursor, keyed by uid. A participant with no
+  // entry yet (never opened the chat, never sent a message) is treated as
+  // having read nothing.
+  lastReadAt: Record<string, Timestamp>
 }
 
 export interface MessageDoc {

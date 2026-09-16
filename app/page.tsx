@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { InstallButton } from '@/components/pwa/install-button'
+import { UnreadBadge } from '@/components/pwa/unread-badge'
 import { AuthProvider, useAuth } from '@/lib/auth-context'
 import { LoginView } from '@/components/auth/login-view'
 import { HomeView } from '@/components/home/home-view'
@@ -47,6 +48,7 @@ function PageShell() {
 
   const nav = (next: View) => { setView(next); setMobileMenu(false) }
   return <div className="app-shell">
+    <UnreadBadge profile={profile} />
     <Sidebar view={view} onNavigate={nav} profile={profile} />
     <div className="main-column">
       <header className="topbar">

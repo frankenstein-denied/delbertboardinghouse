@@ -71,6 +71,14 @@ export function ChatsView({ profile }: { profile: UserProfile }) {
   )
   const { data: messages } = useCollection<MessageDoc>(messagesQuery)
 
+  // Marks the currently-selected conversation as read whenever it's
+  // selected OR new messages arrive while it stays selected — so actively
+  // viewing a chat when a message comes in still counts as read immediately.
+  useEffect(() => {
+    if (!selected) return
+    updateDoc(doc(db, 'conversations', selected.id), { [`lastReadAt.${profile.uid}`]: serverTimestamp() }).catch(() => {})
+  }, [selected?.id, messages.length, profile.uid])
+
   async function startConversationWith(other: { uid: string; name: string }) {
     const id = conversationId(profile.uid, other.uid)
     const ref = doc(db, 'conversations', id)
@@ -81,6 +89,7 @@ export function ChatsView({ profile }: { profile: UserProfile }) {
         participantNames: { [profile.uid]: profile.name, [other.uid]: other.name },
         lastMessage: '',
         lastMessageAt: serverTimestamp(),
+        lastReadAt: {},
       })
     }
     setSelectedId(id)
@@ -98,7 +107,11 @@ export function ChatsView({ profile }: { profile: UserProfile }) {
       createdAt: serverTimestamp(),
       expiresAt: Timestamp.fromMillis(now + MESSAGE_TTL_MS),
     })
-    await updateDoc(doc(db, 'conversations', selected.id), { lastMessage: text, lastMessageAt: serverTimestamp() })
+    await updateDoc(doc(db, 'conversations', selected.id), {
+      lastMessage: text,
+      lastMessageAt: serverTimestamp(),
+      [`lastReadAt.${profile.uid}`]: serverTimestamp(),
+    })
   }
 
   return <div className="chat-layout">
