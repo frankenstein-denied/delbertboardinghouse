@@ -94,7 +94,7 @@ export function LoginView() {
               <label>Room<input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="Room 204" required /></label>
             </>
           )}
-          <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@school.edu" required /></label>
+          <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="username@email.com" required /></label>
           <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" minLength={6} required /></label>
           <label className="remember-me-row">
             <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
