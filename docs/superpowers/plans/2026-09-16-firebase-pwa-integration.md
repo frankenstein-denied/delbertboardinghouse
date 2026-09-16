@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - No real Firebase project exists yet — the user adds credentials to `.env.local` later. Every task's verification is `npx tsc --noEmit && npm run build` (Next's own compiler) plus a manual code-review read-through. **Do not** flag "no automated tests" as a defect in review — the spec's Out of Scope section rules this out explicitly for this plan, and there is no test runner in this repo to write tests against.
-- Firestore JS SDK query objects are not stable across renders — every `query(...)` call site in this plan wraps it in `useMemo` keyed on the primitive values it depends on (never on the auth/profile object itself). Copy that pattern; do not pass a freshly-constructed query straight into `useCollection`.
+- Firestore JS SDK query objects are not stable across renders — every `query(...)` call site in this plan wraps it in `useMemo` keyed on the primitive values it depends on (never on the auth/profile object itself). Copy that pattern; do not pass a freshly-constructed query straight into `useCollection`. The same instability applies to `doc(...)` (`DocumentReference` has no stable identity either) — every `doc(...)` call feeding `useDocument` needs the identical `useMemo` treatment, for the identical reason: `useDocument`'s effect is keyed on `[ref]`, and an un-memoized ref changes on every render — including the re-renders `useDocument`'s own `setData` triggers — producing an infinite resubscribe loop, not just a wasted render.
 - `expiresAt` fields are `Timestamp`, set client-side as `Timestamp.fromMillis(Date.now() + N)` at write time — never trust `serverTimestamp()` for `expiresAt` (it resolves to `null` until the server round-trip completes, which breaks TTL field-type validation for an instant).
 - Never write to another user's Firestore document. Every mutation in every task writes only to `users/{myUid}`, a doc the writer's own uid appears in (`participantIds`, `fromUid`/`toUid`), or a brand-new doc the writer is the author of.
 - Match the existing visual language (`app/globals.css` classes like `card`, `page-heading`, `simple-page`, `eyebrow`) in every new file — do not introduce a second design system.
@@ -510,7 +510,7 @@ git commit -m "feat: add Firestore types, generic query hooks, security rules"
 ```typescript
 'use client'
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   browserLocalPersistence,
   browserSessionPersistence,
@@ -569,7 +569,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const profileRef = firebaseUser ? doc(db, 'users', firebaseUser.uid) : null
+  // Firestore's doc() returns a fresh object every call — no stable identity
+  // across renders, same instability as the Query stability Global Constraint.
+  // Without useMemo, useDocument's `[ref]`-keyed effect sees a "changed" ref
+  // on every render, including the ones ITS OWN onSnapshot callback causes
+  // (setData receives a freshly-constructed object too) — an infinite
+  // unsubscribe/resubscribe loop for as long as anyone is logged in.
+  const profileRef = useMemo(() => (firebaseUser ? doc(db, 'users', firebaseUser.uid) : null), [firebaseUser?.uid])
   const { data: profile, loading: profileLoading } = useDocument<UserProfile>(profileRef)
 
   async function signUp(email: string, password: string, rememberMe: boolean, details: SignUpDetails) {
