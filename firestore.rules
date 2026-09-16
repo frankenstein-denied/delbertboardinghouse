@@ -86,11 +86,18 @@ service cloud.firestore {
       // either the creator's claim or a second identity's signature that
       // doesn't exist in this data model. That entry is trusted from the
       // creator as an accepted residual gap, not solved by this rules pass.
+      // lastMessage/lastReadAt are pinned to their legitimate initial
+      // values here too — without this, a raw-SDK creator could forge
+      // lastReadAt with the OTHER participant's uid pre-populated (e.g. a
+      // far-future timestamp), permanently suppressing that victim's unread
+      // badge for this thread and defeating the whole point of this feature.
       allow create: if isSignedIn()
         && request.auth.uid in request.resource.data.participantIds
         && request.resource.data.participantIds.size() == 2
         && request.resource.data.participantNames[request.auth.uid]
-          == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.name;
+          == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.name
+        && request.resource.data.lastMessage == ''
+        && request.resource.data.lastReadAt == {};
       // participantIds is immutable after creation — without this, either
       // participant could rewrite it to add a third party or drop the other
       // person, retroactively exposing (or locking someone out of) the

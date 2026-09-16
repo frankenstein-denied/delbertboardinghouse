@@ -21,6 +21,11 @@ export function UnreadBadge({ profile }: { profile: UserProfile }) {
 
   const unreadCount = useMemo(() => {
     return conversations.reduce((count, conversation) => {
+      // A freshly-created conversation (startConversationWith) has
+      // lastMessageAt set but lastMessage still '' — that's the doc coming
+      // into existence, not an actual message, so it must never count as
+      // unread for the other participant (who has no lastReadAt entry yet).
+      if (!conversation.lastMessage) return count
       const lastMessageAt = conversation.lastMessageAt?.toMillis() ?? 0
       const lastReadAt = conversation.lastReadAt?.[profile.uid]?.toMillis() ?? 0
       return lastMessageAt > lastReadAt ? count + 1 : count
