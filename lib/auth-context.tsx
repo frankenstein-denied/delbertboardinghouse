@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   browserLocalPersistence,
   browserSessionPersistence,
@@ -59,7 +59,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const profileRef = firebaseUser ? doc(db, 'users', firebaseUser.uid) : null
+  // Firestore's doc() returns a fresh object every call — no stable identity
+  // across renders, same instability as the Query stability Global Constraint.
+  // Without useMemo, useDocument's `[ref]`-keyed effect sees a "changed" ref
+  // on every render, including the ones ITS OWN onSnapshot callback causes
+  // (setData receives a freshly-constructed object too) — an infinite
+  // unsubscribe/resubscribe loop for as long as anyone is logged in.
+  const profileRef = useMemo(() => (firebaseUser ? doc(db, 'users', firebaseUser.uid) : null), [firebaseUser?.uid])
   const { data: profile, loading: profileLoading } = useDocument<UserProfile>(profileRef)
 
   async function signUp(email: string, password: string, rememberMe: boolean, details: SignUpDetails) {
