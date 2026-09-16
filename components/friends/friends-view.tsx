@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Search, UserPlus } from 'lucide-react'
+import { MessageCircle, Search, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase'
 import { collection, doc, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
 import type { FriendRequestDoc, UserProfile } from '@/lib/types'
 
-export function FriendsView({ profile }: { profile: UserProfile }) {
+export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMessage: (uid: string, name: string) => void }) {
   const [search, setSearch] = useState('')
 
   const usersQuery = useMemo(() => query(collection(db, 'users')), [])
@@ -56,9 +56,14 @@ export function FriendsView({ profile }: { profile: UserProfile }) {
         return <div className="friend-card card" key={friend.uid}>
           <div className="friend-card-top"><Avatar profile={friend} size="lg" />{friend.online && <span className="profile-online" />}</div>
           <strong>{friend.name}</strong><span>{friend.program}</span><small>{friend.room}</small>
-          <Button variant="outline" size="sm" disabled={status !== 'none'} onClick={() => sendRequest(friend.uid)}>
-            <UserPlus /> {status === 'friends' ? 'Friends' : status === 'pending' ? 'Requested' : 'Add Friend'}
-          </Button>
+          <div className="friend-card-actions">
+            <Button variant="outline" size="sm" onClick={() => onMessage(friend.uid, friend.name)}>
+              <MessageCircle /> Message
+            </Button>
+            <Button variant="outline" size="sm" disabled={status !== 'none'} onClick={() => sendRequest(friend.uid)}>
+              <UserPlus /> {status === 'friends' ? 'Friends' : status === 'pending' ? 'Requested' : 'Add Friend'}
+            </Button>
+          </div>
         </div>
       })}
       {filtered.length === 0 && <p className="load-more">No residents match your search.</p>}

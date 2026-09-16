@@ -42,7 +42,11 @@ function expiresLabel(expiresAt: Timestamp) {
   return `Message expires in ${hours}h ${mins}m`
 }
 
-export function ChatsView({ profile }: { profile: UserProfile }) {
+export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
+  profile: UserProfile
+  pendingChatWith?: { uid: string; name: string } | null
+  onConsumePendingChat?: () => void
+}) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
   const [starting, setStarting] = useState(false)
@@ -78,6 +82,13 @@ export function ChatsView({ profile }: { profile: UserProfile }) {
     if (!selected) return
     updateDoc(doc(db, 'conversations', selected.id), { [`lastReadAt.${profile.uid}`]: serverTimestamp() }).catch(() => {})
   }, [selected?.id, messages.length, profile.uid])
+
+  useEffect(() => {
+    if (!pendingChatWith) return
+    startConversationWith(pendingChatWith)
+    onConsumePendingChat?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingChatWith])
 
   async function startConversationWith(other: { uid: string; name: string }) {
     const id = conversationId(profile.uid, other.uid)

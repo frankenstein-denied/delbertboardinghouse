@@ -42,6 +42,7 @@ function PageShell() {
   const [view, setView] = useState<View>('home')
   const [mobileMenu, setMobileMenu] = useState(false)
   const [notifications, setNotifications] = useState(false)
+  const [pendingChatWith, setPendingChatWith] = useState<{ uid: string; name: string } | null>(null)
 
   if (loading) return <main className="onboarding"><p>Loading…</p></main>
   if (!profile) return <LoginView />
@@ -62,8 +63,8 @@ function PageShell() {
       {mobileMenu && <MobileMenu view={view} onNavigate={nav} />}
       <main className="content-area">
         {view === 'home' && <HomeView profile={profile} />}
-        {view === 'chats' && <ChatsView profile={profile} />}
-        {view === 'friends' && <FriendsView profile={profile} />}
+        {view === 'chats' && <ChatsView profile={profile} pendingChatWith={pendingChatWith} onConsumePendingChat={() => setPendingChatWith(null)} />}
+        {view === 'friends' && <FriendsView profile={profile} onMessage={(uid, name) => { setPendingChatWith({ uid, name }); nav('chats') }} />}
         {view === 'requests' && <RequestsView profile={profile} />}
         {view === 'reports' && <ReportsView profile={profile} />}
         {view === 'profile' && <ProfileView profile={profile} />}
