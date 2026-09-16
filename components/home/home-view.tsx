@@ -14,7 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Avatar, Expiry } from '@/app/page'
+import { Avatar, Expiry } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
 import { db } from '@/lib/firebase'
 import {
@@ -39,7 +39,12 @@ const REACTION_OPTIONS = [
   { label: 'Pakisuyo', emoji: '🙏' },
 ]
 
-function timeAgo(createdAt: Timestamp) {
+function timeAgo(createdAt: Timestamp | null) {
+  // Belt-and-braces null guard: useCollection resolves a pending
+  // serverTimestamp() to a local estimate (see lib/firestore-hooks.ts), but
+  // any future call site that reads a doc some other way could still hand
+  // this a genuinely-null createdAt — fail soft instead of crashing.
+  if (!createdAt) return 'just now'
   const minutes = Math.max(0, Math.round((Date.now() - createdAt.toMillis()) / 60000))
   if (minutes < 1) return 'just now'
   if (minutes < 60) return `${minutes}m`

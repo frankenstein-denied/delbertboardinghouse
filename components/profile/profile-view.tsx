@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { Settings, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Avatar } from '@/app/page'
-import { useAuth } from '@/lib/auth-context'
+import { Avatar } from '@/components/ui/avatar'
+import { initialsFor, useAuth } from '@/lib/auth-context'
 import { db } from '@/lib/firebase'
 import { doc, updateDoc } from 'firebase/firestore'
 import type { UserProfile } from '@/lib/types'
@@ -20,7 +20,15 @@ export function ProfileView({ profile }: { profile: UserProfile }) {
   async function save() {
     setSaving(true)
     try {
-      await updateDoc(doc(db, 'users', profile.uid), { name: name.trim(), program: program.trim(), room: room.trim() })
+      // Recompute initials alongside name — every Avatar renders `initials`,
+      // not `name`, so leaving it stale means renaming yourself never
+      // updates your avatar.
+      await updateDoc(doc(db, 'users', profile.uid), {
+        name: name.trim(),
+        program: program.trim(),
+        room: room.trim(),
+        initials: initialsFor(name.trim()),
+      })
       setEditing(false)
     } finally {
       setSaving(false)

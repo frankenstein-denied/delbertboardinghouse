@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Search, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Avatar } from '@/app/page'
+import { Avatar } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
 import { db } from '@/lib/firebase'
 import { collection, doc, query, serverTimestamp, setDoc, where } from 'firebase/firestore'

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { MoreHorizontal, Plus, Search, Send, X } from 'lucide-react'
-import { Avatar, Expiry } from '@/app/page'
+import { Avatar, Expiry } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
 import { db } from '@/lib/firebase'
 import {
@@ -26,7 +26,12 @@ function conversationId(uidA: string, uidB: string) {
   return [uidA, uidB].sort().join('_')
 }
 
-function timeLabel(ts: Timestamp) {
+function timeLabel(ts: Timestamp | null) {
+  // Belt-and-braces null guard: see lib/firestore-hooks.ts's
+  // serverTimestamps: 'estimate' fix and lib/types.ts's MessageDoc.createdAt
+  // nullability comment — a future non-hook read path could still hand this
+  // a null timestamp.
+  if (!ts) return ''
   return ts.toDate().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 

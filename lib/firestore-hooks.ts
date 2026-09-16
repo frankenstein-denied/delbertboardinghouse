@@ -22,7 +22,20 @@ export function useCollection<T>(query: Query<DocumentData> | null) {
     const unsubscribe = onSnapshot(
       query,
       (snapshot) => {
-        setData(snapshot.docs.map((docSnapshot) => ({ id: docSnapshot.id, ...docSnapshot.data() } as T & { id: string })))
+        // `serverTimestamps: 'estimate'` — a doc just written with
+        // serverTimestamp() arrives in this very snapshot (latency
+        // compensation) before the server has assigned a real value. The
+        // default ('none') resolves that pending field to `null`, which
+        // crashes any call site that immediately calls .toMillis()/.toDate()
+        // on it (e.g. home-view's timeAgo, chats-view's timeLabel).
+        // 'estimate' resolves it to the local clock instead, then
+        // self-corrects to the server value once the write is acknowledged.
+        setData(
+          snapshot.docs.map(
+            (docSnapshot) =>
+              ({ id: docSnapshot.id, ...docSnapshot.data({ serverTimestamps: 'estimate' }) } as T & { id: string }),
+          ),
+        )
         setLoading(false)
       },
       () => setLoading(false),
@@ -48,7 +61,12 @@ export function useDocument<T>(ref: DocumentReference<DocumentData> | null) {
     const unsubscribe = onSnapshot(
       ref,
       (snapshot) => {
-        setData(snapshot.exists() ? ({ id: snapshot.id, ...snapshot.data() } as T & { id: string }) : null)
+        // Same pending-serverTimestamp reasoning as useCollection above.
+        setData(
+          snapshot.exists()
+            ? ({ id: snapshot.id, ...snapshot.data({ serverTimestamps: 'estimate' }) } as T & { id: string })
+            : null,
+        )
         setLoading(false)
       },
       () => setLoading(false),

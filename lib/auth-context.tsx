@@ -33,7 +33,9 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function initialsFor(name: string) {
+// Exported so profile-view.tsx can recompute initials when a resident
+// renames themselves (every Avatar renders `initials`, not `name`).
+export function initialsFor(name: string) {
   const initials = name
     .trim()
     .split(/\s+/)
@@ -86,7 +88,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function logIn(email: string, password: string, rememberMe: boolean) {
     await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence)
     const credential = await signInWithEmailAndPassword(auth, email, password)
-    await updateDoc(doc(db, 'users', credential.user.uid), { online: true })
+    // setDoc(..., { merge: true }) instead of updateDoc: updateDoc throws
+    // 'not-found' if users/{uid} doesn't exist (e.g. signUp's setDoc failed
+    // partway through after auth succeeded, or the account was created
+    // directly in the Firebase console). The user IS signed in at the Auth
+    // layer at this point — a missing presence-flag doc shouldn't make
+    // logIn itself throw and strand them on a confusing error. setDoc with
+    // merge succeeds whether or not the doc already exists; AuthProvider's
+    // existing loading/profile gate already falls back to LoginView for a
+    // genuinely-missing profile, which is the correct behavior for that
+    // rarer case.
+    await setDoc(doc(db, 'users', credential.user.uid), { online: true }, { merge: true })
   }
 
   async function logOut() {

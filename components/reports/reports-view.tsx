@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Coffee, Flag, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Expiry } from '@/app/page'
+import { Expiry } from '@/components/ui/avatar'
 import { db } from '@/lib/firebase'
 import { addDoc, collection, serverTimestamp, Timestamp } from 'firebase/firestore'
 import type { UserProfile } from '@/lib/types'

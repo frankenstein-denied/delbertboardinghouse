@@ -5,7 +5,6 @@ import {
   Bell,
   BookOpen,
   ChevronDown,
-  Clock3,
   Flag,
   Menu,
   MessageCircle,
@@ -24,14 +23,10 @@ import { FriendsView } from '@/components/friends/friends-view'
 import { RequestsView } from '@/components/friends/requests-view'
 import { ReportsView } from '@/components/reports/reports-view'
 import { ProfileView } from '@/components/profile/profile-view'
+import { Avatar } from '@/components/ui/avatar'
 import type { UserProfile } from '@/lib/types'
 
 type View = 'home' | 'chats' | 'friends' | 'requests' | 'reports' | 'profile'
-
-export function Avatar({ profile, size = 'md' }: { profile: Pick<UserProfile, 'name' | 'initials'>; size?: 'sm' | 'md' | 'lg' }) {
-  return <div className={`avatar avatar-${size}`} aria-label={profile.name}>{profile.initials}</div>
-}
-export function Expiry({ children }: { children: string }) { return <span className="expiry"><Clock3 /> {children}</span> }
 
 export default function Page() {
   return (
