@@ -115,8 +115,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function deleteAccount() {
     if (!auth.currentUser) return
-    await deleteDoc(doc(db, 'users', auth.currentUser.uid))
+    // Auth user first, then the Firestore profile doc: deleteUser() is the
+    // step that commonly throws (auth/requires-recent-login whenever the
+    // session is more than ~5 minutes old, which is the typical case for
+    // anyone reaching this button) — if it throws, both the Auth account
+    // and the Firestore doc stay fully intact, so profile-view.tsx's
+    // existing error message + retry is a real recovery path. Deleting the
+    // Firestore doc first would instead let a `requires-recent-login`
+    // failure permanently strand the resident: profile gone, Auth account
+    // still alive and blocking re-signup with the same email, with no way
+    // to retry the delete. uid captured before deleteUser() since Firebase
+    // clears auth.currentUser once the Auth account is gone.
+    const uid = auth.currentUser.uid
     await deleteUser(auth.currentUser)
+    await deleteDoc(doc(db, 'users', uid))
   }
 
   const loading = authLoading || (Boolean(firebaseUser) && profileLoading)
