@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, CheckCheck, MoreHorizontal, Send } from 'lucide-react'
 import { Avatar, Expiry } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
@@ -87,6 +87,18 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
   }, [messagesLoading, selected?.id])
   const messagesReady = selected != null && readyForId === selected.id
 
+  // Jumps to the newest message whenever a thread finishes loading (opening
+  // a chat, or switching to a different one) and whenever the message count
+  // changes thereafter — matches every messaging app's expectation that you
+  // land at the bottom, not wherever the scroll position happened to be.
+  const messagesRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!messagesReady) return
+    const el = messagesRef.current
+    if (!el) return
+    el.scrollTop = el.scrollHeight
+  }, [messagesReady, selected?.id, messages.length])
+
   // Marks the currently-selected conversation as read whenever it's
   // selected OR new messages arrive while it stays selected — so actively
   // viewing a chat when a message comes in still counts as read immediately.
@@ -170,7 +182,7 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
           <div><strong>{otherName}</strong></div>
           <button className="icon-button" type="button"><MoreHorizontal /></button>
         </div>
-        <div className="messages">
+        <div className="messages" ref={messagesRef}>
           <div className="chat-day">TODAY</div>
           {!messagesReady && <p className="load-more">Loading messages…</p>}
           {messagesReady && messages.map((msg) => {
