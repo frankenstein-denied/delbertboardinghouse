@@ -61,7 +61,9 @@ export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMe
         const status: 'none' | 'pending' | 'friends' = !request ? 'none' : request.status === 'accepted' ? 'friends' : 'pending'
         return <div className="friend-card card" key={friend.uid}>
           <div className="friend-card-top"><Avatar profile={friend} size="lg" />{friend.online && <span className="profile-online" />}</div>
-          <strong>{friend.name}</strong><span>{friend.program}</span><small>{RESIDENT_TYPE_LABELS[friend.residentType]}</small>
+          <div className="friend-card-info">
+            <strong>{friend.name}</strong><span>{friend.program}</span><small>{RESIDENT_TYPE_LABELS[friend.residentType]}</small>
+          </div>
           <div className="friend-card-actions">
             <Button variant="outline" size="sm" onClick={() => onMessage(friend.uid, friend.name)}>
               <MessageCircle /> Message
