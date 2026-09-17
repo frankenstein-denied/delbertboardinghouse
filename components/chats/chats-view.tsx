@@ -73,7 +73,20 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
       : null,
     [selected?.id, nowTick],
   )
-  const { data: messages } = useCollection<MessageDoc>(messagesQuery)
+  const { data: messages, loading: messagesLoading } = useCollection<MessageDoc>(messagesQuery)
+
+  // Without this, switching conversations briefly shows the PREVIOUS
+  // conversation's messages — useCollection's `data` only updates once the
+  // new onSnapshot fires, so stale (wrong-conversation) content lingers on
+  // screen with no visual feedback, which reads as laggy/unresponsive.
+  // Tracks which conversation's messages are actually ready, so a genuine
+  // switch can show a loading state while the nowTick-driven periodic
+  // requery of the SAME open conversation (every 60s) never re-triggers it.
+  const [readyForId, setReadyForId] = useState<string | null>(null)
+  useEffect(() => {
+    if (!messagesLoading && selected?.id) setReadyForId(selected.id)
+  }, [messagesLoading, selected?.id])
+  const messagesReady = selected != null && readyForId === selected.id
 
   // Marks the currently-selected conversation as read whenever it's
   // selected OR new messages arrive while it stays selected — so actively
@@ -162,7 +175,8 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
         </div>
         <div className="messages">
           <div className="chat-day">TODAY</div>
-          {messages.map((msg) => {
+          {!messagesReady && <p className="load-more">Loading messages…</p>}
+          {messagesReady && messages.map((msg) => {
             const seen = Boolean(
               msg.createdAt &&
               selected.lastReadAt?.[otherUid] &&
