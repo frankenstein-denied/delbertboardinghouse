@@ -18,7 +18,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore'
-import type { ConversationDoc, MessageDoc, UserProfile } from '@/lib/types'
+import { RESIDENT_TYPE_LABELS, type ConversationDoc, type MessageDoc, type ResidentType, type UserProfile } from '@/lib/types'
 
 const MESSAGE_TTL_MS = 4 * 60 * 60 * 1000
 
@@ -212,7 +212,7 @@ function StartConversationModal({ myUid, onPick, onClose }: {
 }) {
   const [search, setSearch] = useState('')
   const usersQuery = useMemo(() => query(collection(db, 'users')), [])
-  const { data: users } = useCollection<{ uid: string; name: string; program: string; room: string }>(usersQuery)
+  const { data: users } = useCollection<{ uid: string; name: string; program: string; residentType: ResidentType }>(usersQuery)
   const filtered = users.filter((u) => u.uid !== myUid && u.name.toLowerCase().includes(search.toLowerCase()))
 
   return <div className="notification-popover">
@@ -221,7 +221,7 @@ function StartConversationModal({ myUid, onPick, onClose }: {
     {filtered.map((u) => (
       <button key={u.uid} type="button" className="notification-item" onClick={() => onPick({ uid: u.uid, name: u.name })}>
         <Avatar profile={{ name: u.name, initials: u.name.slice(0, 2).toUpperCase() }} size="sm" />
-        <p><strong>{u.name}</strong><small>{u.program} · {u.room}</small></p>
+        <p><strong>{u.name}</strong><small>{u.program} · {RESIDENT_TYPE_LABELS[u.residentType]}</small></p>
       </button>
     ))}
     {filtered.length === 0 && <p className="load-more">No residents found.</p>}

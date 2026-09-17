@@ -7,7 +7,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
 import { db } from '@/lib/firebase'
 import { collection, doc, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
-import type { FriendRequestDoc, UserProfile } from '@/lib/types'
+import { RESIDENT_TYPE_LABELS, type FriendRequestDoc, type UserProfile } from '@/lib/types'
 
 export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMessage: (uid: string, name: string) => void }) {
   const [search, setSearch] = useState('')
@@ -39,7 +39,7 @@ export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMe
   }
 
   const filtered = users.filter(
-    (u) => u.uid !== profile.uid && (u.name.toLowerCase().includes(search.toLowerCase()) || u.program.toLowerCase().includes(search.toLowerCase()) || u.room.toLowerCase().includes(search.toLowerCase())),
+    (u) => u.uid !== profile.uid && (u.name.toLowerCase().includes(search.toLowerCase()) || u.program.toLowerCase().includes(search.toLowerCase())),
   )
 
   return <div className="simple-page">
@@ -47,7 +47,7 @@ export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMe
       <div><span className="eyebrow">THE HOUSE ROLL CALL</span><h1>Friends</h1><p>Connect with the people who make this place feel like home.</p></div>
     </div>
     <div className="friends-toolbar">
-      <div className="search-box"><Search /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, program, or room" /></div>
+      <div className="search-box"><Search /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or program" /></div>
       <span>{filtered.length} residents</span>
     </div>
     <div className="friends-grid">
@@ -55,7 +55,7 @@ export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMe
         const status = statusWith(friend.uid)
         return <div className="friend-card card" key={friend.uid}>
           <div className="friend-card-top"><Avatar profile={friend} size="lg" />{friend.online && <span className="profile-online" />}</div>
-          <strong>{friend.name}</strong><span>{friend.program}</span><small>{friend.room}</small>
+          <strong>{friend.name}</strong><span>{friend.program}</span><small>{RESIDENT_TYPE_LABELS[friend.residentType]}</small>
           <div className="friend-card-actions">
             <Button variant="outline" size="sm" onClick={() => onMessage(friend.uid, friend.name)}>
               <MessageCircle /> Message

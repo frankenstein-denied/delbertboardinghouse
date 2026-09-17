@@ -5,6 +5,7 @@ import { Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth-context'
 import { firebaseConfigured } from '@/lib/firebase'
+import type { ResidentType } from '@/lib/types'
 
 type Mode = 'login' | 'signup'
 
@@ -13,7 +14,7 @@ export function LoginView() {
   const [mode, setMode] = useState<Mode>('login')
   const [name, setName] = useState('')
   const [program, setProgram] = useState('')
-  const [room, setRoom] = useState('')
+  const [residentType, setResidentType] = useState<ResidentType | ''>('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
@@ -46,10 +47,10 @@ export function LoginView() {
     setSubmitting(true)
     try {
       if (mode === 'signup') {
-        if (!name.trim() || !program.trim() || !room.trim()) {
-          throw new Error('Please fill in your name, program, and room.')
+        if (!name.trim() || !program.trim() || !residentType) {
+          throw new Error('Please fill in your name, program, and resident type.')
         }
-        await signUp(email, password, rememberMe, { name, program, room })
+        await signUp(email, password, rememberMe, { name, program, residentType: residentType as ResidentType })
       } else {
         await logIn(email, password, rememberMe)
       }
@@ -91,7 +92,14 @@ export function LoginView() {
             <>
               <label>Name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Juan Dela Cruz" required /></label>
               <label>Program<input value={program} onChange={(e) => setProgram(e.target.value)} placeholder="BS Computer Science" required /></label>
-              <label>Room<input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="Room 204" required /></label>
+              <label>I am a...
+                <select value={residentType} onChange={(e) => setResidentType(e.target.value as ResidentType)} required>
+                  <option value="" disabled>Select one</option>
+                  <option value="housemate">Housemate</option>
+                  <option value="outsider">Outsider</option>
+                  <option value="owner">Owner</option>
+                </select>
+              </label>
             </>
           )}
           <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="username@email.com" required /></label>

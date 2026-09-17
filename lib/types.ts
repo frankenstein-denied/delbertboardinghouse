@@ -1,10 +1,17 @@
 import type { Timestamp } from 'firebase/firestore'
 
+export type ResidentType = 'housemate' | 'outsider' | 'owner'
+export const RESIDENT_TYPE_LABELS: Record<ResidentType, string> = {
+  housemate: 'Housemate',
+  outsider: 'Outsider',
+  owner: 'Owner',
+}
+
 export interface UserProfile {
   uid: string
   name: string
   program: string
-  room: string
+  residentType: ResidentType
   initials: string
   online: boolean
   createdAt: Timestamp
@@ -19,7 +26,7 @@ export interface PostDoc {
   authorId: string
   authorName: string
   authorProgram: string
-  authorRoom: string
+  authorResidentType: ResidentType
   authorInitials: string
   body: string
   image: string | null

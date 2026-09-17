@@ -5,21 +5,22 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   createUserWithEmailAndPassword,
+  deleteUser,
   onAuthStateChanged,
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
   type User as FirebaseUser,
 } from 'firebase/auth'
-import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
+import { deleteDoc, doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, db, firebaseConfigured } from '@/lib/firebase'
 import { useDocument } from '@/lib/firestore-hooks'
-import type { UserProfile } from '@/lib/types'
+import type { ResidentType, UserProfile } from '@/lib/types'
 
 interface SignUpDetails {
   name: string
   program: string
-  room: string
+  residentType: ResidentType
 }
 
 interface AuthContextValue {
@@ -29,6 +30,7 @@ interface AuthContextValue {
   signUp: (email: string, password: string, rememberMe: boolean, details: SignUpDetails) => Promise<void>
   logIn: (email: string, password: string, rememberMe: boolean) => Promise<void>
   logOut: () => Promise<void>
+  deleteAccount: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -77,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       uid: credential.user.uid,
       name: details.name,
       program: details.program,
-      room: details.room,
+      residentType: details.residentType,
       initials: initialsFor(details.name),
       online: true,
       createdAt: serverTimestamp(),
@@ -111,10 +113,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOut(auth)
   }
 
+  async function deleteAccount() {
+    if (!auth.currentUser) return
+    await deleteDoc(doc(db, 'users', auth.currentUser.uid))
+    await deleteUser(auth.currentUser)
+  }
+
   const loading = authLoading || (Boolean(firebaseUser) && profileLoading)
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, profile, loading, signUp, logIn, logOut }}>
+    <AuthContext.Provider value={{ firebaseUser, profile, loading, signUp, logIn, logOut, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   )

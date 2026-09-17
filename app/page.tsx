@@ -6,6 +6,7 @@ import {
   BookOpen,
   ChevronDown,
   Flag,
+  Info,
   Menu,
   MessageCircle,
   MoreHorizontal,
@@ -24,11 +25,12 @@ import { ChatsView } from '@/components/chats/chats-view'
 import { FriendsView } from '@/components/friends/friends-view'
 import { RequestsView } from '@/components/friends/requests-view'
 import { ReportsView } from '@/components/reports/reports-view'
+import { GuideView } from '@/components/guide/guide-view'
 import { ProfileView } from '@/components/profile/profile-view'
 import { Avatar } from '@/components/ui/avatar'
-import type { UserProfile } from '@/lib/types'
+import { RESIDENT_TYPE_LABELS, type UserProfile } from '@/lib/types'
 
-type View = 'home' | 'chats' | 'friends' | 'requests' | 'reports' | 'profile'
+type View = 'home' | 'chats' | 'friends' | 'requests' | 'reports' | 'guide' | 'profile'
 
 export default function Page() {
   return (
@@ -68,6 +70,7 @@ function PageShell() {
         {view === 'friends' && <FriendsView profile={profile} onMessage={(uid, name) => { setPendingChatWith({ uid, name }); nav('chats') }} />}
         {view === 'requests' && <RequestsView profile={profile} />}
         {view === 'reports' && <ReportsView profile={profile} />}
+        {view === 'guide' && <GuideView />}
         {view === 'profile' && <ProfileView profile={profile} />}
       </main>
     </div>
@@ -76,7 +79,7 @@ function PageShell() {
 }
 
 function Sidebar({ view, onNavigate, profile }: { view: View; onNavigate: (view: View) => void; profile: UserProfile }) {
-  const items: { id: View; label: string; icon: typeof Bell; badge?: string }[] = [{ id: 'home', label: 'Home', icon: BookOpen }, { id: 'chats', label: 'Chats', icon: MessageCircle }, { id: 'friends', label: 'Friends', icon: Users }, { id: 'requests', label: 'Friend Requests', icon: UserPlus }, { id: 'reports', label: 'Reports', icon: Flag }]
+  const items: { id: View; label: string; icon: typeof Bell; badge?: string }[] = [{ id: 'home', label: 'Home', icon: BookOpen }, { id: 'chats', label: 'Chats', icon: MessageCircle }, { id: 'friends', label: 'Friends', icon: Users }, { id: 'requests', label: 'Friend Requests', icon: UserPlus }, { id: 'reports', label: 'Reports', icon: Flag }, { id: 'guide', label: 'Guide', icon: Info }]
   return <aside className="sidebar">
     <div className="brand-lockup sidebar-brand"><span className="logo-mark">D</span><strong>delbert</strong></div>
     <p className="sidebar-kicker">THE BOARDING HOUSE COMMUNITY</p>
@@ -84,9 +87,9 @@ function Sidebar({ view, onNavigate, profile }: { view: View; onNavigate: (view:
     <div className="sidebar-bottom">
       <InstallButton />
       <button className="nav-item"><Settings /> <span>Settings</span></button>
-      <button className="side-user" onClick={() => onNavigate('profile')}><Avatar profile={profile} /><span><strong>{profile.name}</strong><small>{profile.program} · {profile.room}</small></span><MoreHorizontal /></button>
+      <button className="side-user" onClick={() => onNavigate('profile')}><Avatar profile={profile} /><span><strong>{profile.name}</strong><small>{profile.program} · {RESIDENT_TYPE_LABELS[profile.residentType]}</small></span><MoreHorizontal /></button>
     </div>
   </aside>
 }
-function MobileMenu({ view, onNavigate }: { view: View; onNavigate: (view: View) => void }) { return <div className="mobile-menu">{[['requests', 'Friend Requests', UserPlus], ['reports', 'Reports', Flag]].map(([id, label, Icon]) => <button className={view === id ? 'active' : ''} key={id as string} onClick={() => onNavigate(id as View)}>{Icon && <Icon />} {label as string}</button>)}</div> }
+function MobileMenu({ view, onNavigate }: { view: View; onNavigate: (view: View) => void }) { return <div className="mobile-menu">{[['requests', 'Friend Requests', UserPlus], ['reports', 'Reports', Flag], ['guide', 'Guide', Info]].map(([id, label, Icon]) => <button className={view === id ? 'active' : ''} key={id as string} onClick={() => onNavigate(id as View)}>{Icon && <Icon />} {label as string}</button>)}</div> }
 function MobileNav({ view, onNavigate }: { view: View; onNavigate: (view: View) => void }) { return <nav className="mobile-nav">{[['home', 'Home', BookOpen], ['chats', 'Chats', MessageCircle], ['friends', 'Friends', Users], ['profile', 'Profile', UserPlus]].map(([id, label, Icon]) => <button className={view === id ? 'active' : ''} key={id as string} onClick={() => onNavigate(id as View)}>{Icon && <Icon />}<span>{label as string}</span></button>)}</nav> }

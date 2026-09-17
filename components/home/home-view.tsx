@@ -17,6 +17,7 @@ import { db } from '@/lib/firebase'
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   orderBy,
   query,
@@ -25,7 +26,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore'
-import type { PostDoc, UserProfile } from '@/lib/types'
+import { RESIDENT_TYPE_LABELS, type PostDoc, type UserProfile } from '@/lib/types'
 
 const POST_TTL_MS = 24 * 60 * 60 * 1000
 const REACTION_OPTIONS = [
@@ -52,6 +53,13 @@ function timeAgo(createdAt: Timestamp | null) {
 function expiresLabel(expiresAt: Timestamp) {
   const hours = Math.max(0, Math.ceil((expiresAt.toMillis() - Date.now()) / 3600000))
   return `Expires in ${hours}h`
+}
+
+function timeGreeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
 }
 
 export function HomeView({ profile }: { profile: UserProfile }) {
@@ -93,7 +101,7 @@ export function HomeView({ profile }: { profile: UserProfile }) {
         authorId: profile.uid,
         authorName: profile.name,
         authorProgram: profile.program,
-        authorRoom: profile.room,
+        authorResidentType: profile.residentType,
         authorInitials: profile.initials,
         body,
         image: null,
@@ -111,7 +119,7 @@ export function HomeView({ profile }: { profile: UserProfile }) {
   return <div className="page-grid">
     <div className="feed-column">
       <div className="page-heading">
-        <div><span className="eyebrow">THE FREEDOM WALL</span><h1>Good morning, {profile.name.split(' ')[0]}.</h1><p>Here&apos;s what&apos;s happening around the house.</p></div>
+        <div><span className="eyebrow">THE FREEDOM WALL</span><h1>{timeGreeting()}, {profile.name.split(' ')[0]}.</h1><p>Here&apos;s what&apos;s happening around the house.</p></div>
         <div className="heading-sparkle">✦</div>
       </div>
       <div className="composer-card card">
@@ -144,6 +152,7 @@ function PostCard({ post, myUid, activeReaction, setActiveReaction }: {
   activeReaction: string | null
   setActiveReaction: (v: string | null) => void
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const myReaction = post.reactions[myUid]
   const counts = new Map<string, { emoji: string; count: number }>()
   for (const reaction of Object.values(post.reactions)) {
@@ -156,11 +165,26 @@ function PostCard({ post, myUid, activeReaction, setActiveReaction }: {
     setActiveReaction(null)
   }
 
+  async function handleDelete() {
+    if (!window.confirm('Delete this post? This cannot be undone.')) return
+    await deleteDoc(doc(db, 'posts', post.id))
+    setMenuOpen(false)
+  }
+
   return <article className="post-card card">
     <div className="post-header">
       <Avatar profile={{ name: post.authorName, initials: post.authorInitials }} />
-      <div className="post-byline"><strong>{post.authorName}</strong><span>{post.authorProgram} · {post.authorRoom}</span><small>{timeAgo(post.createdAt)} · <span className="public-dot">●</span> Housemates</small></div>
-      <button className="more-button" type="button"><MoreHorizontal /></button>
+      <div className="post-byline"><strong>{post.authorName}</strong><span>{post.authorProgram} · {RESIDENT_TYPE_LABELS[post.authorResidentType]}</span><small>{timeAgo(post.createdAt)} · <span className="public-dot">●</span> Housemates</small></div>
+      {post.authorId === myUid && (
+        <div className="post-menu-wrap">
+          <button className="more-button" type="button" onClick={() => setMenuOpen((v) => !v)}><MoreHorizontal /></button>
+          {menuOpen && (
+            <div className="post-menu">
+              <button type="button" onClick={handleDelete}>Delete post</button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
     <p className="post-body">{post.body}</p>
     <div className="post-footer-meta"><Expiry>{expiresLabel(post.expiresAt)}</Expiry><span>{post.commentsCount} comments</span></div>
