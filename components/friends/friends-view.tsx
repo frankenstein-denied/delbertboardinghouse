@@ -6,26 +6,25 @@ import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
 import { db } from '@/lib/firebase'
-import { collection, doc, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
+import { collection, deleteDoc, doc, query, serverTimestamp, setDoc, where } from 'firebase/firestore'
 import { RESIDENT_TYPE_LABELS, type FriendRequestDoc, type UserProfile } from '@/lib/types'
 
 export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMessage: (uid: string, name: string) => void }) {
   const [search, setSearch] = useState('')
 
   const usersQuery = useMemo(() => query(collection(db, 'users')), [])
-  const { data: users } = useCollection<UserProfile>(usersQuery)
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery)
 
   const outgoingQuery = useMemo(() => query(collection(db, 'friendRequests'), where('fromUid', '==', profile.uid)), [profile.uid])
   const incomingQuery = useMemo(() => query(collection(db, 'friendRequests'), where('toUid', '==', profile.uid)), [profile.uid])
-  const { data: outgoing } = useCollection<FriendRequestDoc>(outgoingQuery)
-  const { data: incoming } = useCollection<FriendRequestDoc>(incomingQuery)
+  const { data: outgoing, loading: outgoingLoading } = useCollection<FriendRequestDoc>(outgoingQuery)
+  const { data: incoming, loading: incomingLoading } = useCollection<FriendRequestDoc>(incomingQuery)
+  const loading = usersLoading || outgoingLoading || incomingLoading
 
-  function statusWith(otherUid: string): 'none' | 'pending' | 'friends' {
-    const request = [...outgoing, ...incoming].find(
+  function requestWith(otherUid: string) {
+    return [...outgoing, ...incoming].find(
       (r) => (r.fromUid === profile.uid && r.toUid === otherUid) || (r.fromUid === otherUid && r.toUid === profile.uid),
     )
-    if (!request) return 'none'
-    return request.status === 'accepted' ? 'friends' : 'pending'
   }
 
   async function sendRequest(otherUid: string) {
@@ -36,6 +35,11 @@ export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMe
       status: 'pending',
       createdAt: serverTimestamp(),
     })
+  }
+
+  async function removeFriend(requestId: string) {
+    if (!window.confirm('Remove this friend?')) return
+    await deleteDoc(doc(db, 'friendRequests', requestId))
   }
 
   const filtered = users.filter(
@@ -51,8 +55,10 @@ export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMe
       <span>{filtered.length} residents</span>
     </div>
     <div className="friends-grid">
-      {filtered.map((friend) => {
-        const status = statusWith(friend.uid)
+      {loading && <p className="load-more">Loading residents…</p>}
+      {!loading && filtered.map((friend) => {
+        const request = requestWith(friend.uid)
+        const status: 'none' | 'pending' | 'friends' = !request ? 'none' : request.status === 'accepted' ? 'friends' : 'pending'
         return <div className="friend-card card" key={friend.uid}>
           <div className="friend-card-top"><Avatar profile={friend} size="lg" />{friend.online && <span className="profile-online" />}</div>
           <strong>{friend.name}</strong><span>{friend.program}</span><small>{RESIDENT_TYPE_LABELS[friend.residentType]}</small>
@@ -60,13 +66,17 @@ export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMe
             <Button variant="outline" size="sm" onClick={() => onMessage(friend.uid, friend.name)}>
               <MessageCircle /> Message
             </Button>
-            <Button variant="outline" size="sm" disabled={status !== 'none'} onClick={() => sendRequest(friend.uid)}>
-              <UserPlus /> {status === 'friends' ? 'Friends' : status === 'pending' ? 'Requested' : 'Add Friend'}
-            </Button>
+            {status === 'friends' ? (
+              <Button variant="outline" size="sm" onClick={() => removeFriend(request!.id)}>Remove Friend</Button>
+            ) : (
+              <Button variant="outline" size="sm" disabled={status === 'pending'} onClick={() => sendRequest(friend.uid)}>
+                <UserPlus /> {status === 'pending' ? 'Requested' : 'Add Friend'}
+              </Button>
+            )}
           </div>
         </div>
       })}
-      {filtered.length === 0 && <p className="load-more">No residents match your search.</p>}
+      {!loading && filtered.length === 0 && <p className="load-more">No residents match your search.</p>}
     </div>
   </div>
 }

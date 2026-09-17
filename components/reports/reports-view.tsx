@@ -54,7 +54,7 @@ export function ReportsView({ profile }: { profile: UserProfile }) {
     () => query(collection(db, 'reports'), where('expiresAt', '>', Timestamp.fromMillis(nowTick)), orderBy('expiresAt', 'desc')),
     [nowTick],
   )
-  const { data: reports } = useCollection<ReportDoc>(reportsQuery)
+  const { data: reports, loading: reportsLoading } = useCollection<ReportDoc>(reportsQuery)
 
   async function submit() {
     if (!type || !reason.trim() || submitting) return
@@ -103,8 +103,9 @@ export function ReportsView({ profile }: { profile: UserProfile }) {
         <div className="help-note"><Coffee /><span>For emergencies, reach out to a housemate directly — this board isn&apos;t monitored in real time.</span></div>
       </div>
     </div>
-    {reports.map((report) => <ReportCard key={report.id} report={report} />)}
-    {reports.length === 0 && <p className="load-more">No active reports right now.</p>}
+    {reportsLoading && <p className="load-more">Loading reports…</p>}
+    {!reportsLoading && reports.map((report) => <ReportCard key={report.id} report={report} />)}
+    {!reportsLoading && reports.length === 0 && <p className="load-more">No active reports right now.</p>}
   </div>
 }
 

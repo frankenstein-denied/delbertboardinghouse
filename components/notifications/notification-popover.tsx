@@ -23,14 +23,16 @@ export function NotificationPopover({ profile, onClose }: { profile: UserProfile
     () => query(collection(db, 'friendRequests'), where('toUid', '==', profile.uid), where('status', '==', 'pending')),
     [profile.uid],
   )
-  const { data: requests } = useCollection<FriendRequestDoc>(requestsQuery)
+  const { data: requests, loading: requestsLoading } = useCollection<FriendRequestDoc>(requestsQuery)
 
   const usersQuery = useMemo(() => query(collection(db, 'users')), [])
-  const { data: users } = useCollection<UserProfile>(usersQuery)
+  const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery)
+  const loading = requestsLoading || usersLoading
 
   return <div className="notification-popover">
     <div className="popover-heading"><strong>Notifications</strong><button onClick={onClose}><X /></button></div>
-    {requests.map((request) => {
+    {loading && <p className="load-more">Loading…</p>}
+    {!loading && requests.map((request) => {
       const sender = users.find((u) => u.uid === request.fromUid)
       const name = sender?.name ?? 'Someone'
       return <div className="notification-item" key={request.id}>
@@ -38,6 +40,6 @@ export function NotificationPopover({ profile, onClose }: { profile: UserProfile
         <p><strong>{name}</strong> sent you a friend request.<small>{timeAgo(request.createdAt)}</small></p>
       </div>
     })}
-    {requests.length === 0 && <p className="load-more">You&apos;re all caught up for now.</p>}
+    {!loading && requests.length === 0 && <p className="load-more">You&apos;re all caught up for now.</p>}
   </div>
 }

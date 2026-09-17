@@ -14,7 +14,7 @@ export function RequestsView({ profile }: { profile: UserProfile }) {
     () => query(collection(db, 'friendRequests'), where('toUid', '==', profile.uid), where('status', '==', 'pending')),
     [profile.uid],
   )
-  const { data: requests } = useCollection<FriendRequestDoc & { fromName?: string }>(incomingQuery)
+  const { data: requests, loading: requestsLoading } = useCollection<FriendRequestDoc & { fromName?: string }>(incomingQuery)
 
   async function respond(requestId: string, status: 'accepted' | 'ignored') {
     await updateDoc(doc(db, 'friendRequests', requestId), { status })
@@ -24,7 +24,8 @@ export function RequestsView({ profile }: { profile: UserProfile }) {
     <div className="page-heading">
       <div><span className="eyebrow">PEOPLE WHO FOUND YOU</span><h1>Friend Requests <span className="heading-count">{requests.length}</span></h1><p>Say hello to a new housemate.</p></div>
     </div>
-    {requests.length ? <div className="request-list">
+    {requestsLoading && <p className="load-more">Loading requests…</p>}
+    {!requestsLoading && (requests.length ? <div className="request-list">
       {requests.map((request) => (
         <div className="request-card card" key={request.id}>
           <Avatar profile={{ name: request.fromUid, initials: request.fromUid.slice(0, 2).toUpperCase() }} size="lg" />
@@ -35,6 +36,6 @@ export function RequestsView({ profile }: { profile: UserProfile }) {
           </div>
         </div>
       ))}
-    </div> : <div className="empty-state card"><div><UserPlus /></div><h2>No new requests</h2><p>You&apos;re all caught up for now.</p></div>}
+    </div> : <div className="empty-state card"><div><UserPlus /></div><h2>No new requests</h2><p>You&apos;re all caught up for now.</p></div>)}
   </div>
 }

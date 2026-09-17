@@ -89,7 +89,7 @@ export function HomeView({ profile }: { profile: UserProfile }) {
     () => query(collection(db, 'posts'), where('expiresAt', '>', Timestamp.fromMillis(nowTick)), orderBy('expiresAt', 'desc')),
     [nowTick],
   )
-  const { data: posts } = useCollection<PostDoc>(postsQuery)
+  const { data: posts, loading: postsLoading } = useCollection<PostDoc>(postsQuery)
 
   async function submitPost() {
     const body = composer.trim()
@@ -137,10 +137,11 @@ export function HomeView({ profile }: { profile: UserProfile }) {
         <div><strong>Freedom Wall</strong><p>Your casual corner for random thoughts, shoutouts, and house tea.</p></div>
         <Sparkles />
       </div>
-      {posts.map((post) => (
+      {postsLoading && <p className="load-more">Loading posts…</p>}
+      {!postsLoading && posts.map((post) => (
         <PostCard key={post.id} post={post} myUid={profile.uid} activeReaction={activeReaction} setActiveReaction={setActiveReaction} />
       ))}
-      {posts.length === 0 && <p className="load-more">No posts yet — be the first to say something <ChevronDown /></p>}
+      {!postsLoading && posts.length === 0 && <p className="load-more">No posts yet — be the first to say something <ChevronDown /></p>}
     </div>
     <RightRail />
   </div>
@@ -215,20 +216,22 @@ function RightRail() {
   // Not per-user — "who's online" is a single global query, so the
   // dependency array is empty rather than keyed on anything per-render.
   const onlineQuery = useMemo(() => query(collection(db, 'users'), where('online', '==', true)), [])
-  const { data: onlineUsers } = useCollection<UserProfile>(onlineQuery)
+  const { data: onlineUsers, loading: onlineLoading } = useCollection<UserProfile>(onlineQuery)
 
   return <aside className="right-rail">
-    <div className="rail-card card">
-      <div className="rail-title"><span>HOUSE PULSE</span><span className="live-dot">● LIVE</span></div>
-      <div className="pulse-row">
-        <span className="pulse-number">{onlineUsers.length}</span>
-        <span>resident{onlineUsers.length === 1 ? '' : 's'} online<br /><small>Someone&apos;s always around</small></span>
+    {!onlineLoading && (
+      <div className="rail-card card">
+        <div className="rail-title"><span>HOUSE PULSE</span><span className="live-dot">● LIVE</span></div>
+        <div className="pulse-row">
+          <span className="pulse-number">{onlineUsers.length}</span>
+          <span>resident{onlineUsers.length === 1 ? '' : 's'} online<br /><small>Someone&apos;s always around</small></span>
+        </div>
+        <div className="online-avatars">
+          {onlineUsers.slice(0, 6).map((u) => <Avatar key={u.uid} profile={u} size="sm" />)}
+          {onlineUsers.length > 6 && <span>+{onlineUsers.length - 6}</span>}
+        </div>
       </div>
-      <div className="online-avatars">
-        {onlineUsers.slice(0, 6).map((u) => <Avatar key={u.uid} profile={u} size="sm" />)}
-        {onlineUsers.length > 6 && <span>+{onlineUsers.length - 6}</span>}
-      </div>
-    </div>
+    )}
     <div className="rail-card card">
       <div className="rail-title"><span>QUICK NOTES</span><BookOpen /></div>
       <div className="note-row"><span className="note-dot orange" /><p><strong>Quiet hours</strong><small>10:00 PM – 7:00 AM</small></p></div>

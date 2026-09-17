@@ -173,7 +173,16 @@ service cloud.firestore {
         && request.resource.data.fromUid == resource.data.fromUid
         && request.resource.data.toUid == resource.data.toUid
         && request.resource.data.status in ['accepted', 'ignored'];
-      allow delete: if false;
+      // Either party in an ACCEPTED request can delete it to unfriend — this is
+      // the only "friends" relationship this data model has (no separate
+      // friends array anywhere, see the match block's own top comment), so
+      // removing the request doc removes the friendship for both sides at once.
+      // Only accepted requests are deletable this way — a pending request the
+      // recipient doesn't want is handled by the existing 'ignored' status
+      // transition instead, not deletion.
+      allow delete: if isSignedIn()
+        && resource.data.status == 'accepted'
+        && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
     }
   }
 }

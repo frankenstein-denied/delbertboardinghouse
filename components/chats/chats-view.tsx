@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, CheckCheck, MoreHorizontal, Plus, Search, Send, X } from 'lucide-react'
+import { ArrowLeft, CheckCheck, MoreHorizontal, Send } from 'lucide-react'
 import { Avatar, Expiry } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
 import { db } from '@/lib/firebase'
@@ -18,7 +18,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore'
-import { RESIDENT_TYPE_LABELS, type ConversationDoc, type MessageDoc, type ResidentType, type UserProfile } from '@/lib/types'
+import type { ConversationDoc, MessageDoc, UserProfile } from '@/lib/types'
 
 const MESSAGE_TTL_MS = 4 * 60 * 60 * 1000
 
@@ -49,13 +49,12 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
-  const [starting, setStarting] = useState(false)
 
   const conversationsQuery = useMemo(
     () => query(collection(db, 'conversations'), where('participantIds', 'array-contains', profile.uid), orderBy('lastMessageAt', 'desc')),
     [profile.uid],
   )
-  const { data: conversations } = useCollection<ConversationDoc>(conversationsQuery)
+  const { data: conversations, loading: conversationsLoading } = useCollection<ConversationDoc>(conversationsQuery)
   const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0] ?? null
 
   // Same reasoning as HomeView's `nowTick`: refresh the `>` bound every 60s
@@ -118,7 +117,6 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
         })
       }
       setSelectedId(id)
-      setStarting(false)
     } catch (err) {
       // Requires firestore.rules' conversations read rule to allow
       // resource == null (a brand-new conversation id) — if this still
@@ -150,9 +148,9 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
   return <div className={`chat-layout${selectedId ? ' chat-thread-open' : ''}`}>
     <section className="conversation-list card">
       <div className="section-heading"><div><span className="eyebrow">YOUR INBOX</span><h1>Chats</h1></div>
-        <button className="icon-button" type="button" onClick={() => setStarting(true)}><Plus /></button>
       </div>
-      {conversations.map((chat) => {
+      {conversationsLoading && <p className="load-more">Loading chats…</p>}
+      {!conversationsLoading && conversations.map((chat) => {
         const otherUid = chat.participantIds.find((uid) => uid !== profile.uid) ?? chat.participantIds[0]
         const otherName = chat.participantNames[otherUid] ?? 'Housemate'
         return <button className={selected?.id === chat.id ? 'conversation active' : 'conversation'} key={chat.id} onClick={() => setSelectedId(chat.id)}>
@@ -160,8 +158,7 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
           <span><strong>{otherName}</strong><small>{chat.lastMessage || 'Say hi!'}</small></span>
         </button>
       })}
-      {conversations.length === 0 && <p className="load-more">No conversations yet — tap + to start one.</p>}
-      {starting && <StartConversationModal myUid={profile.uid} onPick={startConversationWith} onClose={() => setStarting(false)} />}
+      {!conversationsLoading && conversations.length === 0 && <p className="load-more">Go to Friends to message someone.</p>}
     </section>
     {selected ? (() => {
       const otherUid = selected.participantIds.find((uid) => uid !== profile.uid) ?? selected.participantIds[0]
@@ -202,28 +199,5 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
         </div>
       </section>
     })() : <section className="chat-panel card"><p className="load-more">Pick a conversation, or start a new one.</p></section>}
-  </div>
-}
-
-function StartConversationModal({ myUid, onPick, onClose }: {
-  myUid: string
-  onPick: (other: { uid: string; name: string }) => void
-  onClose: () => void
-}) {
-  const [search, setSearch] = useState('')
-  const usersQuery = useMemo(() => query(collection(db, 'users')), [])
-  const { data: users } = useCollection<{ uid: string; name: string; program: string; residentType: ResidentType }>(usersQuery)
-  const filtered = users.filter((u) => u.uid !== myUid && u.name.toLowerCase().includes(search.toLowerCase()))
-
-  return <div className="notification-popover">
-    <div className="popover-heading"><strong>Start a chat</strong><button type="button" onClick={onClose}><X /></button></div>
-    <div className="search-box"><Search /><input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search residents" /></div>
-    {filtered.map((u) => (
-      <button key={u.uid} type="button" className="notification-item" onClick={() => onPick({ uid: u.uid, name: u.name })}>
-        <Avatar profile={{ name: u.name, initials: u.name.slice(0, 2).toUpperCase() }} size="sm" />
-        <p><strong>{u.name}</strong><small>{u.program} · {RESIDENT_TYPE_LABELS[u.residentType]}</small></p>
-      </button>
-    ))}
-    {filtered.length === 0 && <p className="load-more">No residents found.</p>}
   </div>
 }
