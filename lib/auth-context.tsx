@@ -72,6 +72,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const profileRef = useMemo(() => (firebaseUser ? doc(db, 'users', firebaseUser.uid) : null), [firebaseUser?.uid])
   const { data: profile, loading: profileLoading } = useDocument<UserProfile>(profileRef)
 
+  // Self-heal accounts created before `residentType` replaced the old room
+  // number field (see commit 391c639): logIn() only ever merges
+  // {uid, online} into the profile doc, so an account that signed up before
+  // that migration keeps loading with residentType permanently undefined.
+  // Firestore's client SDK rejects writing `undefined` outright (e.g.
+  // addDoc for a wall post's authorResidentType), which crashed posting
+  // entirely for those accounts. Defaulting to 'housemate' here is a
+  // one-time background patch — the resident can still correct it via the
+  // existing profile-edit resident-type select.
+  useEffect(() => {
+    if (!profile || profile.residentType || !firebaseUser) return
+    setDoc(doc(db, 'users', firebaseUser.uid), { residentType: 'housemate' }, { merge: true }).catch(() => {})
+  }, [profile, firebaseUser])
+
   async function signUp(email: string, password: string, rememberMe: boolean, details: SignUpDetails) {
     await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence)
     const credential = await createUserWithEmailAndPassword(auth, email, password)

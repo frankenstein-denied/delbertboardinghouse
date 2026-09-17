@@ -208,7 +208,13 @@ export function HomeView({ profile }: { profile: UserProfile }) {
         authorId: profile.uid,
         authorName: profile.name,
         authorProgram: profile.program,
-        authorResidentType: profile.residentType,
+        // Defensive fallback: the AuthProvider self-heals a pre-migration
+        // account missing residentType (see lib/auth-context.tsx), but that
+        // Firestore round-trip may not have landed yet if the resident posts
+        // within the first instant of loading — Firestore's client SDK
+        // rejects writing `undefined` outright, so this must never be bare
+        // profile.residentType.
+        authorResidentType: profile.residentType ?? 'housemate',
         authorInitials: profile.initials,
         body,
         image: null,
