@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { CheckCheck, MoreHorizontal, Plus, Search, Send, X } from 'lucide-react'
+import { ArrowLeft, CheckCheck, MoreHorizontal, Plus, Search, Send, X } from 'lucide-react'
 import { Avatar, Expiry } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
 import { db } from '@/lib/firebase'
@@ -134,7 +134,7 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
     })
   }
 
-  return <div className="chat-layout">
+  return <div className={`chat-layout${selectedId ? ' chat-thread-open' : ''}`}>
     <section className="conversation-list card">
       <div className="section-heading"><div><span className="eyebrow">YOUR INBOX</span><h1>Chats</h1></div>
         <button className="icon-button" type="button" onClick={() => setStarting(true)}><Plus /></button>
@@ -155,6 +155,7 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
       const otherName = selected.participantNames[otherUid] ?? 'Housemate'
       return <section className="chat-panel card">
         <div className="chat-header">
+          <button className="icon-button back-button" type="button" onClick={() => setSelectedId(null)} aria-label="Back to chats"><ArrowLeft /></button>
           <Avatar profile={{ name: otherName, initials: otherName.slice(0, 2).toUpperCase() }} />
           <div><strong>{otherName}</strong></div>
           <button className="icon-button" type="button"><MoreHorizontal /></button>

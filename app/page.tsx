@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import {
+  Bell,
   BookOpen,
   ChevronDown,
   Flag,
@@ -14,6 +15,8 @@ import {
 } from 'lucide-react'
 import { InstallButton } from '@/components/pwa/install-button'
 import { UnreadBadge } from '@/components/pwa/unread-badge'
+import { NotificationPopover } from '@/components/notifications/notification-popover'
+import { NotificationDot } from '@/components/notifications/notification-dot'
 import { AuthProvider, useAuth } from '@/lib/auth-context'
 import { LoginView } from '@/components/auth/login-view'
 import { HomeView } from '@/components/home/home-view'
@@ -39,6 +42,7 @@ function PageShell() {
   const { profile, loading } = useAuth()
   const [view, setView] = useState<View>('home')
   const [mobileMenu, setMobileMenu] = useState(false)
+  const [notifications, setNotifications] = useState(false)
   const [pendingChatWith, setPendingChatWith] = useState<{ uid: string; name: string } | null>(null)
 
   if (loading) return <main className="onboarding"><p>Loading…</p></main>
@@ -53,8 +57,10 @@ function PageShell() {
         <button className="mobile-icon" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Open menu"><Menu /></button>
         <div className="mobile-brand"><span className="logo-mark">D</span><strong>delbert</strong></div>
         <div className="topbar-spacer" />
+        <button className="icon-button notification-trigger" onClick={() => setNotifications(!notifications)} aria-label="Notifications"><Bell /><NotificationDot profile={profile} /></button>
         <button className="top-profile" onClick={() => nav('profile')}><Avatar profile={profile} size="sm" /><ChevronDown /></button>
       </header>
+      {notifications && <NotificationPopover profile={profile} onClose={() => setNotifications(false)} />}
       {mobileMenu && <MobileMenu view={view} onNavigate={nav} />}
       <main className="content-area">
         {view === 'home' && <HomeView profile={profile} />}
@@ -70,7 +76,7 @@ function PageShell() {
 }
 
 function Sidebar({ view, onNavigate, profile }: { view: View; onNavigate: (view: View) => void; profile: UserProfile }) {
-  const items: { id: View; label: string; icon: typeof BookOpen; badge?: string }[] = [{ id: 'home', label: 'Home', icon: BookOpen }, { id: 'chats', label: 'Chats', icon: MessageCircle }, { id: 'friends', label: 'Friends', icon: Users }, { id: 'requests', label: 'Friend Requests', icon: UserPlus }, { id: 'reports', label: 'Reports', icon: Flag }]
+  const items: { id: View; label: string; icon: typeof Bell; badge?: string }[] = [{ id: 'home', label: 'Home', icon: BookOpen }, { id: 'chats', label: 'Chats', icon: MessageCircle }, { id: 'friends', label: 'Friends', icon: Users }, { id: 'requests', label: 'Friend Requests', icon: UserPlus }, { id: 'reports', label: 'Reports', icon: Flag }]
   return <aside className="sidebar">
     <div className="brand-lockup sidebar-brand"><span className="logo-mark">D</span><strong>delbert</strong></div>
     <p className="sidebar-kicker">THE BOARDING HOUSE COMMUNITY</p>

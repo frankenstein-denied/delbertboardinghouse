@@ -28,7 +28,7 @@ export function RequestsView({ profile }: { profile: UserProfile }) {
       {requests.map((request) => (
         <div className="request-card card" key={request.id}>
           <Avatar profile={{ name: request.fromUid, initials: request.fromUid.slice(0, 2).toUpperCase() }} size="lg" />
-          <div className="request-info"><strong>{request.fromUid}</strong><small>Sent {request.createdAt.toDate().toLocaleDateString()}</small></div>
+          <div className="request-info"><strong>{request.fromUid}</strong><small>Sent {request.createdAt ? request.createdAt.toDate().toLocaleDateString() : 'just now'}</small></div>
           <div className="request-actions">
             <Button size="sm" onClick={() => respond(request.id, 'accepted')}><Check /> Accept</Button>
             <Button variant="outline" size="sm" onClick={() => respond(request.id, 'ignored')}>Ignore</Button>
