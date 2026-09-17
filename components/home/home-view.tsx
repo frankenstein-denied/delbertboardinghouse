@@ -18,6 +18,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   orderBy,
   query,
@@ -26,7 +27,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore'
-import { RESIDENT_TYPE_LABELS, type CommentDoc, type PostDoc, type UserProfile } from '@/lib/types'
+import { RESIDENT_TYPE_LABELS, type CommentDoc, type PostDoc, type Reaction, type UserProfile } from '@/lib/types'
 
 const POST_TTL_MS = 24 * 60 * 60 * 1000
 const REACTION_OPTIONS = [
@@ -273,6 +274,7 @@ function PostCard({ post, profile, allUsers, nowTick, activeReaction, setActiveR
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
+  const [reacting, setReacting] = useState(false)
   const myUid = profile.uid
   const myReaction = post.reactions[myUid]
   const counts = new Map<string, { emoji: string; count: number }>()
@@ -281,9 +283,30 @@ function PostCard({ post, profile, allUsers, nowTick, activeReaction, setActiveR
     counts.set(reaction.label, { emoji: reaction.emoji, count: (existing?.count ?? 0) + 1 })
   }
 
+  // Clicking the reaction you already have removes it (a real toggle,
+  // matching every social app's "tap your own reaction again to undo" — the
+  // map write for a different option already replaces it either way, since
+  // it's a plain overwrite of the same key, not an add).
+  //
+  // `reacting` guards against a fast double-tap: myReaction is read fresh
+  // from the current render's post snapshot, but this function is async and
+  // only clears activeReaction after the write resolves — without this
+  // guard, two clicks fired before the first write's snapshot round-trips
+  // both read the same pre-write myReaction and race each other (e.g.
+  // tapping the same emoji twice fast sends two "add" writes instead of an
+  // add then a remove).
   async function react(option: { label: string; emoji: string }) {
-    await updateDoc(doc(db, 'posts', post.id), { [`reactions.${myUid}`]: option })
-    setActiveReaction(null)
+    if (reacting) return
+    setReacting(true)
+    try {
+      const isRemoving = myReaction?.label === option.label
+      await updateDoc(doc(db, 'posts', post.id), {
+        [`reactions.${myUid}`]: isRemoving ? deleteField() : option,
+      })
+      setActiveReaction(null)
+    } finally {
+      setReacting(false)
+    }
   }
 
   async function handleDelete() {
@@ -320,7 +343,14 @@ function PostCard({ post, profile, allUsers, nowTick, activeReaction, setActiveR
         {activeReaction === post.id && (
           <div className="reaction-picker">
             {REACTION_OPTIONS.map((option) => (
-              <button key={option.label} type="button" title={option.label} onClick={() => react(option)}>
+              <button
+                key={option.label}
+                type="button"
+                title={myReaction?.label === option.label ? `Remove ${option.label}` : option.label}
+                className={myReaction?.label === option.label ? 'mine' : ''}
+                disabled={reacting}
+                onClick={() => react(option)}
+              >
                 <span>{option.emoji}</span><small>{option.label}</small>
               </button>
             ))}
@@ -329,15 +359,52 @@ function PostCard({ post, profile, allUsers, nowTick, activeReaction, setActiveR
       </div>
       <button type="button" className={commentsOpen ? 'reacted' : ''} onClick={() => setCommentsOpen((v) => !v)}><MessageCircle /> Comment</button>
     </div>
-    {commentsOpen && <CommentsSection postId={post.id} profile={profile} allUsers={allUsers} nowTick={nowTick} />}
+    {commentsOpen && (
+      <CommentsSection postId={post.id} profile={profile} allUsers={allUsers} nowTick={nowTick} reactions={post.reactions} />
+    )}
   </article>
 }
 
-function CommentsSection({ postId, profile, allUsers, nowTick }: {
+// Resolves each reactor's uid to their name/initials and shows a clickable
+// summary — clicking it reveals exactly who reacted with what, rather than
+// just the anonymous emoji+count totals shown under the post itself.
+function ReactionsWhoButton({ reactions, allUsers }: { reactions: Record<string, Reaction>; allUsers: UserProfile[] }) {
+  const [open, setOpen] = useState(false)
+  const entries = Object.entries(reactions)
+  if (!entries.length) return <span className="comments-reactions-empty">No reactions yet</span>
+
+  const counts = new Map<string, { emoji: string; count: number }>()
+  for (const reaction of Object.values(reactions)) {
+    const existing = counts.get(reaction.label)
+    counts.set(reaction.label, { emoji: reaction.emoji, count: (existing?.count ?? 0) + 1 })
+  }
+
+  return <div className="reactions-who-wrap">
+    <button type="button" className="reactions-who-trigger" onClick={() => setOpen((v) => !v)}>
+      {[...counts.entries()].map(([label, { emoji, count }]) => <span key={label}>{emoji} {count}</span>)}
+    </button>
+    {open && (
+      <div className="reactions-who-list">
+        {entries.map(([uid, reaction]) => {
+          const user = allUsers.find((u) => u.uid === uid)
+          const name = user?.name ?? 'Housemate'
+          return <div className="reactions-who-row" key={uid}>
+            <Avatar profile={{ name, initials: user?.initials ?? name.slice(0, 2).toUpperCase() }} size="sm" />
+            <span>{name}</span>
+            <span className="reactions-who-emoji">{reaction.emoji} {reaction.label}</span>
+          </div>
+        })}
+      </div>
+    )}
+  </div>
+}
+
+function CommentsSection({ postId, profile, allUsers, nowTick, reactions }: {
   postId: string
   profile: UserProfile
   allUsers: UserProfile[]
   nowTick: number
+  reactions: Record<string, Reaction>
 }) {
   const [text, setText] = useState('')
   const [posting, setPosting] = useState(false)
@@ -399,6 +466,10 @@ function CommentsSection({ postId, profile, allUsers, nowTick }: {
   }
 
   return <div className="comments-thread">
+    <div className="comments-top">
+      <span className="comments-count">{comments.length} comment{comments.length === 1 ? '' : 's'}</span>
+      <ReactionsWhoButton reactions={reactions} allUsers={allUsers} />
+    </div>
     {loading && <p className="load-more">Loading comments…</p>}
     {!loading && comments.map((comment) => (
       <div className="comment-row" key={comment.id}>
