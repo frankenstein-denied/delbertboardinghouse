@@ -44,7 +44,14 @@ gcloud firestore fields ttls update expiresAt \
 
 gcloud firestore fields ttls update expiresAt \
   --collection-group=messages --enable-ttl --project=YOUR_PROJECT_ID
+
+gcloud firestore fields ttls update expiresAt \
+  --collection-group=comments --enable-ttl --project=YOUR_PROJECT_ID
 ```
+
+`--collection-group=comments` applies to every post's `comments`
+subcollection at once, since Firestore collection-group TTL matches by
+collection ID regardless of parent document.
 
 (Console equivalent: Firestore Database → each collection → the `expiresAt`
 field → "Enable TTL".) Firestore describes TTL deletion as happening

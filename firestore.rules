@@ -59,6 +59,22 @@ service cloud.firestore {
         && request.resource.data.reactions.diff(resource.data.reactions).affectedKeys().hasOnly([request.auth.uid]);
       // Only the author can delete their own post.
       allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+
+      // comments/{commentId} — 24h TTL via `expiresAt`, mirrors the post's
+      // own TTL window. Firestore has no cascading delete, so a comment can
+      // briefly outlive a deleted parent post until its own TTL sweep runs —
+      // accepted residual, matching this data model's existing no-cascade
+      // posture elsewhere (e.g. messages after a conversation).
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn()
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.authorName == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.name
+          && request.resource.data.authorInitials == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.initials
+          && request.resource.data.expiresAt is timestamp
+          && request.resource.data.expiresAt.toMillis() <= request.time.toMillis() + 24 * 60 * 60 * 1000 + 300000;
+        allow update, delete: if false;
+      }
     }
 
     // reports/{reportId} — public, anonymous — readable by any signed-in

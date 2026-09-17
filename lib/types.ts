@@ -31,7 +31,6 @@ export interface PostDoc {
   body: string
   image: string | null
   reactions: Record<string, Reaction>
-  commentsCount: number
   // Nullable: onSnapshot can deliver this doc (the latency-compensated local
   // write) before the serverTimestamp() round-trip resolves it to a real
   // value — callers deriving a relative/absolute time from this must
@@ -72,6 +71,19 @@ export interface MessageDoc {
   senderId: string
   text: string
   // Same nullability reasoning as PostDoc.createdAt above.
+  createdAt: Timestamp | null
+  expiresAt: Timestamp
+}
+
+export interface CommentDoc {
+  authorId: string
+  authorName: string
+  authorInitials: string
+  body: string
+  // Nullable: onSnapshot can deliver this doc (the latency-compensated local
+  // write) before the serverTimestamp() round-trip resolves it to a real
+  // value — callers deriving a relative/absolute time from this must
+  // null-guard rather than assume it's always set.
   createdAt: Timestamp | null
   expiresAt: Timestamp
 }
