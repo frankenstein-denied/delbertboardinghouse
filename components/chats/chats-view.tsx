@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { MoreHorizontal, Plus, Search, Send, X } from 'lucide-react'
+import { CheckCheck, MoreHorizontal, Plus, Search, Send, X } from 'lucide-react'
 import { Avatar, Expiry } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
 import { db } from '@/lib/firebase'
@@ -161,12 +161,25 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
         </div>
         <div className="messages">
           <div className="chat-day">TODAY</div>
-          {messages.map((msg) => (
-            <div key={msg.id} className={`message-row ${msg.senderId === profile.uid ? 'mine' : ''}`}>
-              <div className="message-bubble"><p>{msg.text}</p><small>{timeLabel(msg.createdAt)}</small></div>
-              <Expiry>{expiresLabel(msg.expiresAt)}</Expiry>
-            </div>
-          ))}
+          {messages.map((msg) => {
+            const seen = Boolean(
+              msg.createdAt &&
+              selected.lastReadAt?.[otherUid] &&
+              selected.lastReadAt[otherUid].toMillis() >= msg.createdAt.toMillis(),
+            )
+            return (
+              <div key={msg.id} className={`message-row ${msg.senderId === profile.uid ? 'mine' : ''}`}>
+                <div className="message-bubble">
+                  <p>{msg.text}</p>
+                  <div className="message-meta">
+                    <small>{timeLabel(msg.createdAt)}</small>
+                    {msg.senderId === profile.uid && <CheckCheck className={`seen-check${seen ? ' seen' : ''}`} />}
+                  </div>
+                </div>
+                <Expiry>{expiresLabel(msg.expiresAt)}</Expiry>
+              </div>
+            )
+          })}
         </div>
         <div className="message-composer">
           <input value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') sendMessage() }} placeholder="Type a message..." />

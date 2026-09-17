@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import {
-  Bell,
   BookOpen,
   ChevronDown,
   Flag,
@@ -12,7 +11,6 @@ import {
   Settings,
   UserPlus,
   Users,
-  X,
 } from 'lucide-react'
 import { InstallButton } from '@/components/pwa/install-button'
 import { UnreadBadge } from '@/components/pwa/unread-badge'
@@ -41,7 +39,6 @@ function PageShell() {
   const { profile, loading } = useAuth()
   const [view, setView] = useState<View>('home')
   const [mobileMenu, setMobileMenu] = useState(false)
-  const [notifications, setNotifications] = useState(false)
   const [pendingChatWith, setPendingChatWith] = useState<{ uid: string; name: string } | null>(null)
 
   if (loading) return <main className="onboarding"><p>Loading…</p></main>
@@ -56,9 +53,7 @@ function PageShell() {
         <button className="mobile-icon" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Open menu"><Menu /></button>
         <div className="mobile-brand"><span className="logo-mark">D</span><strong>delbert</strong></div>
         <div className="topbar-spacer" />
-        <button className="icon-button notification-trigger" onClick={() => setNotifications(!notifications)} aria-label="Notifications"><Bell /><span className="notification-dot" /></button>
         <button className="top-profile" onClick={() => nav('profile')}><Avatar profile={profile} size="sm" /><ChevronDown /></button>
-        {notifications && <NotificationPopover onClose={() => setNotifications(false)} />}
       </header>
       {mobileMenu && <MobileMenu view={view} onNavigate={nav} />}
       <main className="content-area">
@@ -75,7 +70,7 @@ function PageShell() {
 }
 
 function Sidebar({ view, onNavigate, profile }: { view: View; onNavigate: (view: View) => void; profile: UserProfile }) {
-  const items: { id: View; label: string; icon: typeof Bell; badge?: string }[] = [{ id: 'home', label: 'Home', icon: BookOpen }, { id: 'chats', label: 'Chats', icon: MessageCircle }, { id: 'friends', label: 'Friends', icon: Users }, { id: 'requests', label: 'Friend Requests', icon: UserPlus }, { id: 'reports', label: 'Reports', icon: Flag }]
+  const items: { id: View; label: string; icon: typeof BookOpen; badge?: string }[] = [{ id: 'home', label: 'Home', icon: BookOpen }, { id: 'chats', label: 'Chats', icon: MessageCircle }, { id: 'friends', label: 'Friends', icon: Users }, { id: 'requests', label: 'Friend Requests', icon: UserPlus }, { id: 'reports', label: 'Reports', icon: Flag }]
   return <aside className="sidebar">
     <div className="brand-lockup sidebar-brand"><span className="logo-mark">D</span><strong>delbert</strong></div>
     <p className="sidebar-kicker">THE BOARDING HOUSE COMMUNITY</p>
@@ -89,10 +84,3 @@ function Sidebar({ view, onNavigate, profile }: { view: View; onNavigate: (view:
 }
 function MobileMenu({ view, onNavigate }: { view: View; onNavigate: (view: View) => void }) { return <div className="mobile-menu">{[['requests', 'Friend Requests', UserPlus], ['reports', 'Reports', Flag]].map(([id, label, Icon]) => <button className={view === id ? 'active' : ''} key={id as string} onClick={() => onNavigate(id as View)}>{Icon && <Icon />} {label as string}</button>)}</div> }
 function MobileNav({ view, onNavigate }: { view: View; onNavigate: (view: View) => void }) { return <nav className="mobile-nav">{[['home', 'Home', BookOpen], ['chats', 'Chats', MessageCircle], ['friends', 'Friends', Users], ['profile', 'Profile', UserPlus]].map(([id, label, Icon]) => <button className={view === id ? 'active' : ''} key={id as string} onClick={() => onNavigate(id as View)}>{Icon && <Icon />}<span>{label as string}</span></button>)}</nav> }
-function NotificationPopover({ onClose }: { onClose: () => void }) {
-  return <div className="notification-popover">
-    <div className="popover-heading"><strong>Notifications</strong><button onClick={onClose}><X /></button></div>
-    <div className="notification-item"><div className="avatar avatar-sm">MS</div><p><strong>Maria</strong> reacted &ldquo;😂 Hala ka ni Nanay&rdquo; to your post.<small>12 minutes ago</small></p></div>
-    <div className="notification-item"><div className="avatar avatar-sm">AR</div><p><strong>Angela</strong> sent you a friend request.<small>1 hour ago</small></p></div>
-  </div>
-}
