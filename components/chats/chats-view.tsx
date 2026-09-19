@@ -54,7 +54,7 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
     () => query(collection(db, 'conversations'), where('participantIds', 'array-contains', profile.uid), orderBy('lastMessageAt', 'desc')),
     [profile.uid],
   )
-  const { data: allConversations, loading: conversationsLoading } = useCollection<ConversationDoc>(conversationsQuery)
+  const { data: allConversations, loading: conversationsLoading } = useCollection<ConversationDoc>(conversationsQuery, `conversations:${profile.uid}`, { persist: true })
 
   // Same reasoning as HomeView's `nowTick`: refresh the `>` bound every 60s
   // so a message that ages past 4h disappears from an open thread promptly,
@@ -90,7 +90,7 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
       : null,
     [selected?.id, nowTick],
   )
-  const { data: messages, loading: messagesLoading } = useCollection<MessageDoc>(messagesQuery)
+  const { data: messages, loading: messagesLoading } = useCollection<MessageDoc>(messagesQuery, `messages:${selected?.id}`)
 
   // Without this, switching conversations briefly shows the PREVIOUS
   // conversation's messages — useCollection's `data` only updates once the

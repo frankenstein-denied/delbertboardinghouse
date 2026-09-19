@@ -17,7 +17,7 @@ export function UnreadBadge({ profile }: { profile: UserProfile }) {
     () => query(collection(db, 'conversations'), where('participantIds', 'array-contains', profile.uid)),
     [profile.uid],
   )
-  const { data: conversations } = useCollection<ConversationDoc>(conversationsQuery)
+  const { data: conversations } = useCollection<ConversationDoc>(conversationsQuery, `conversations-unread:${profile.uid}`, { persist: true })
 
   const unreadCount = useMemo(() => {
     return conversations.reduce((count, conversation) => {

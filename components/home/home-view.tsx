@@ -153,7 +153,7 @@ export function HomeView({ profile }: { profile: UserProfile }) {
   const composerRef = useRef<HTMLTextAreaElement>(null)
 
   const usersQuery = useMemo(() => query(collection(db, 'users')), [])
-  const { data: allUsers } = useCollection<UserProfile>(usersQuery)
+  const { data: allUsers } = useCollection<UserProfile>(usersQuery, 'users', { persist: true })
   const mentionCandidates = useMemo(() => allUsers.filter((u) => u.uid !== profile.uid), [allUsers, profile.uid])
   const mention = useMentionAutocomplete(mentionCandidates)
 
@@ -179,7 +179,7 @@ export function HomeView({ profile }: { profile: UserProfile }) {
     () => query(collection(db, 'posts'), where('expiresAt', '>', Timestamp.fromMillis(nowTick)), orderBy('expiresAt', 'desc')),
     [nowTick],
   )
-  const { data: posts, loading: postsLoading } = useCollection<PostDoc>(postsQuery)
+  const { data: posts, loading: postsLoading } = useCollection<PostDoc>(postsQuery, 'posts', { persist: true })
 
   function handleComposerChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setComposer(e.target.value)
@@ -424,7 +424,7 @@ function CommentsSection({ postId, profile, allUsers, nowTick, reactions }: {
     ),
     [postId, nowTick],
   )
-  const { data: comments, loading } = useCollection<CommentDoc>(commentsQuery)
+  const { data: comments, loading } = useCollection<CommentDoc>(commentsQuery, `comments:${postId}`)
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setText(e.target.value)
@@ -501,7 +501,7 @@ function RightRail() {
   // Not per-user — "who's online" is a single global query, so the
   // dependency array is empty rather than keyed on anything per-render.
   const onlineQuery = useMemo(() => query(collection(db, 'users'), where('online', '==', true)), [])
-  const { data: onlineUsers, loading: onlineLoading } = useCollection<UserProfile>(onlineQuery)
+  const { data: onlineUsers, loading: onlineLoading } = useCollection<UserProfile>(onlineQuery, 'users:online', { persist: true })
 
   return <aside className="right-rail">
     {!onlineLoading && (

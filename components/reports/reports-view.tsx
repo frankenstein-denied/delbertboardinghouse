@@ -54,7 +54,7 @@ export function ReportsView({ profile }: { profile: UserProfile }) {
     () => query(collection(db, 'reports'), where('expiresAt', '>', Timestamp.fromMillis(nowTick)), orderBy('expiresAt', 'desc')),
     [nowTick],
   )
-  const { data: reports, loading: reportsLoading } = useCollection<ReportDoc>(reportsQuery)
+  const { data: reports, loading: reportsLoading } = useCollection<ReportDoc>(reportsQuery, 'reports', { persist: true })
 
   async function submit() {
     if (!type || !reason.trim() || submitting) return

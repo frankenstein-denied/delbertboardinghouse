@@ -13,7 +13,7 @@ export function FriendsView({ profile, onMessage }: { profile: UserProfile; onMe
   const [search, setSearch] = useState('')
 
   const usersQuery = useMemo(() => query(collection(db, 'users')), [])
-  const { data: users, loading } = useCollection<UserProfile>(usersQuery)
+  const { data: users, loading } = useCollection<UserProfile>(usersQuery, 'users', { persist: true })
 
   const filtered = users.filter(
     (u) => u.uid !== profile.uid && (u.name.toLowerCase().includes(search.toLowerCase()) || u.program.toLowerCase().includes(search.toLowerCase())),
