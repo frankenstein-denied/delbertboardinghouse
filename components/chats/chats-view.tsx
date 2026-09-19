@@ -76,7 +76,13 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
   // Only fall back to the first conversation when nothing was explicitly
   // requested. A requested chat that isn't in the snapshot yet (a
   // just-created conversation) must NOT fall back to another person's chat.
-  const selected = selectedId ? conversations.find((c) => c.id === selectedId) ?? null : conversations[0] ?? null
+  // `opened` is the doc we just read/created in startConversationWith. It
+  // backs the panel when the live list hasn't (or won't) surface that chat,
+  // so the thread never hangs on "Opening chat…".
+  const [opened, setOpened] = useState<(ConversationDoc & { id: string }) | null>(null)
+  const selected = selectedId
+    ? conversations.find((c) => c.id === selectedId) ?? (opened?.id === selectedId ? opened : null)
+    : conversations[0] ?? null
 
   const messagesQuery = useMemo(
     () => selected
@@ -146,6 +152,8 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
           await updateDoc(ref, { lastMessage: '', lastMessageAt: serverTimestamp() })
         }
       }
+      const fresh = await getDoc(ref)
+      if (fresh.exists()) setOpened({ id, ...(fresh.data({ serverTimestamps: 'estimate' }) as ConversationDoc) })
       setSelectedId(id)
     } catch (err) {
       // Requires firestore.rules' conversations read rule to allow
