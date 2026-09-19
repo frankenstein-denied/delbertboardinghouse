@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, CheckCheck, MoreHorizontal, Send } from 'lucide-react'
 import { Avatar, Expiry } from '@/components/ui/avatar'
 import { useCollection } from '@/lib/firestore-hooks'
-import { db } from '@/lib/firebase'
+import { auth, db } from '@/lib/firebase'
 import {
   addDoc,
   collection,
@@ -66,11 +66,15 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
   }, [])
 
   // Conversation docs have no TTL of their own, only their messages do, so a
-  // chat whose last activity is older than the message TTL would linger in
-  // the list (with a stale lastMessage preview) over an empty thread. A null
+  // chat whose last message is older than the message TTL would linger with a
+  // stale preview over an empty thread — hide those. A chat with no message
+  // yet (lastMessage '') has nothing to expire, so it stays: hiding it after
+  // 4h made chats you'd opened but not typed in "go missing". A null
   // lastMessageAt is a just-written local serverTimestamp, i.e. fresh.
   const conversations = useMemo(
-    () => allConversations.filter((c) => !c.lastMessageAt || c.lastMessageAt.toMillis() + MESSAGE_TTL_MS > nowTick),
+    () => allConversations.filter(
+      (c) => !c.lastMessage || !c.lastMessageAt || c.lastMessageAt.toMillis() + MESSAGE_TTL_MS > nowTick,
+    ),
     [allConversations, nowTick],
   )
   // Only fall back to the first conversation when nothing was explicitly
@@ -181,6 +185,22 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
       lastMessageAt: serverTimestamp(),
       [`lastReadAt.${profile.uid}`]: serverTimestamp(),
     })
+    notifyRecipient(selected.id, text)
+  }
+
+  // Fire-and-forget push to the other participant's devices. A failure here
+  // (route not deployed, no service account, recipient has no devices) must
+  // never affect sending the message itself.
+  async function notifyRecipient(conversationId: string, text: string) {
+    try {
+      const idToken = await auth.currentUser?.getIdToken()
+      if (!idToken) return
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ conversationId, text }),
+      })
+    } catch {}
   }
 
   return <div className={`chat-layout${selectedId ? ' chat-thread-open' : ''}`}>

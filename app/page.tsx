@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { InstallButton } from '@/components/pwa/install-button'
 import { UnreadBadge } from '@/components/pwa/unread-badge'
+import { PushNotifications } from '@/components/pwa/push-notifications'
 import { AuthProvider, useAuth } from '@/lib/auth-context'
 import { LoginView } from '@/components/auth/login-view'
 import { HomeView } from '@/components/home/home-view'
@@ -54,6 +55,7 @@ function PageShell() {
         <button className="mobile-icon" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Open menu"><Menu /></button>
         <div className="mobile-brand"><span className="logo-mark">D</span><strong>delbert</strong></div>
         <div className="topbar-spacer" />
+        <PushNotifications profile={profile} />
         <button className="top-profile" onClick={() => nav('profile')}><Avatar profile={profile} size="sm" /><ChevronDown /></button>
       </header>
       {mobileMenu && <MobileMenu view={view} onNavigate={nav} />}

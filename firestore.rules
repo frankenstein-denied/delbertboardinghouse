@@ -25,6 +25,12 @@ service cloud.firestore {
       allow delete: if isSelf(uid);
     }
 
+    // users/{uid}/fcmTokens/{token} — this resident's push-notification device
+    // tokens. Private to the owner; the server route reads them via Admin SDK.
+    match /users/{uid}/fcmTokens/{token} {
+      allow read, write: if isSelf(uid);
+    }
+
     // posts/{postId} — freedom-wall feed posts, 24h TTL via `expiresAt`.
     match /posts/{postId} {
       allow read: if isSignedIn();
