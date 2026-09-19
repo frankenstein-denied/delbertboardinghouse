@@ -6,3 +6,6 @@ minimumReleaseAgeExclude:
 
 allowBuilds:
   protobufjs: true
+  # firebase-admin's dependency; its install script only pre-generates default
+  # config for Firebase Hosting, which this app doesn't use. Denied on purpose.
+  '@firebase/util': false
