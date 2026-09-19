@@ -73,7 +73,10 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
     () => allConversations.filter((c) => !c.lastMessageAt || c.lastMessageAt.toMillis() + MESSAGE_TTL_MS > nowTick),
     [allConversations, nowTick],
   )
-  const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0] ?? null
+  // Only fall back to the first conversation when nothing was explicitly
+  // requested. A requested chat that isn't in the snapshot yet (a
+  // just-created conversation) must NOT fall back to another person's chat.
+  const selected = selectedId ? conversations.find((c) => c.id === selectedId) ?? null : conversations[0] ?? null
 
   const messagesQuery = useMemo(
     () => selected
@@ -225,6 +228,6 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
           <button className="send-button" type="button" onClick={sendMessage}><Send /></button>
         </div>
       </section>
-    })() : <section className="chat-panel card"><p className="load-more">Pick a conversation, or start a new one.</p></section>}
+    })() : <section className="chat-panel card"><p className="load-more">{selectedId ? 'Opening chat…' : 'Pick a conversation, or start a new one.'}</p></section>}
   </div>
 }
