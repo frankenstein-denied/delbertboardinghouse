@@ -10,9 +10,9 @@ import type { UserProfile } from '@/lib/types'
 const SW_SCOPE = '/firebase-cloud-messaging-push-scope'
 
 async function registerToken(uid: string) {
-  if (!(await isSupported())) return
+  if (!(await isSupported())) throw new Error('Push is not supported in this browser')
   const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
-  if (!vapidKey || !app) return
+  if (!vapidKey || !app) throw new Error('NEXT_PUBLIC_FIREBASE_VAPID_KEY is missing from this build')
   const params = new URLSearchParams({
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? '',
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '',
@@ -21,10 +21,11 @@ async function registerToken(uid: string) {
   })
   const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${params}`, { scope: SW_SCOPE })
   const token = await getToken(getMessaging(app), { vapidKey, serviceWorkerRegistration: registration })
-  if (!token) return
+  if (!token) throw new Error('FCM returned no token')
   // One doc per device token, private to its owner (see firestore.rules); the
   // /api/notify route reads these with the Admin SDK to fan a message out.
   await setDoc(doc(db, 'users', uid, 'fcmTokens', token), { token, updatedAt: serverTimestamp() })
+  console.info('Push: device registered for notifications')
 }
 
 /**
@@ -39,7 +40,7 @@ export function PushNotifications({ profile }: { profile: UserProfile }) {
   useEffect(() => {
     if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) return
     setPermission(Notification.permission)
-    if (Notification.permission === 'granted') registerToken(profile.uid).catch(() => {})
+    if (Notification.permission === 'granted') registerToken(profile.uid).catch((err) => console.error('Push setup failed:', err))
   }, [profile.uid])
 
   const enable = useCallback(async () => {

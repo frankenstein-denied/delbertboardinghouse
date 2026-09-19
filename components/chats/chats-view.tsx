@@ -195,12 +195,15 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
     try {
       const idToken = await auth.currentUser?.getIdToken()
       if (!idToken) return
-      await fetch('/api/notify', {
+      const res = await fetch('/api/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
         body: JSON.stringify({ conversationId, text }),
       })
-    } catch {}
+      console.info('Push notify:', res.status, await res.json().catch(() => null))
+    } catch (err) {
+      console.error('Push notify failed:', err)
+    }
   }
 
   return <div className={`chat-layout${selectedId ? ' chat-thread-open' : ''}`}>

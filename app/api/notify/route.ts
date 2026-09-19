@@ -23,7 +23,10 @@ export async function POST(request: Request) {
     const idToken = request.headers.get('authorization')?.replace(/^Bearer /, '')
     if (!idToken) return Response.json({ error: 'unauthorized' }, { status: 401 })
     const app = adminApp()
-    const { uid } = await getAuth(app).verifyIdToken(idToken)
+    const { uid } = await getAuth(app)
+      .verifyIdToken(idToken)
+      .catch(() => ({ uid: null }))
+    if (!uid) return Response.json({ error: 'unauthorized' }, { status: 401 })
 
     const { conversationId, text } = await request.json()
     if (typeof conversationId !== 'string' || typeof text !== 'string' || !text.trim()) {
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
 
     const tokenDocs = await db.collection(`users/${recipientUid}/fcmTokens`).get()
     const tokens = tokenDocs.docs.map((d) => d.id)
-    if (tokens.length === 0) return Response.json({ sent: 0 })
+    if (tokens.length === 0) return Response.json({ sent: 0, reason: 'recipient has no registered devices' })
 
     const senderName: string = conversation?.participantNames?.[uid] ?? 'A housemate'
     const result = await getMessaging(app).sendEachForMulticast({
@@ -57,7 +60,10 @@ export async function POST(request: Request) {
           : null,
       ),
     )
-    return Response.json({ sent: result.successCount })
+    return Response.json({
+      sent: result.successCount,
+      failed: result.responses.filter((r) => !r.success).map((r) => r.error?.code),
+    })
   } catch (err) {
     console.error('notify failed:', err)
     return Response.json({ error: 'failed' }, { status: 500 })
