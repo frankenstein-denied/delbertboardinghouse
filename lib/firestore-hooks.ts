@@ -76,11 +76,16 @@ function attach(entry: CacheEntry) {
       notify(entry)
     },
     () => {
-      // Keep whatever was cached; the next subscriber re-attaches.
+      // Keep whatever was cached and retry shortly while anyone is still
+      // watching, so a dropped connection heals without a page reload; an
+      // unwatched entry re-attaches on its next subscriber instead.
       entry.failed = true
       entry.unsubscribe = null
       entry.state = { ...entry.state, loading: false }
       notify(entry)
+      setTimeout(() => {
+        if (entry.failed && entry.listeners.size > 0) attach(entry)
+      }, 5000)
     },
   )
 }

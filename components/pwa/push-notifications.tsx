@@ -36,19 +36,34 @@ async function registerToken(uid: string) {
  */
 export function PushNotifications({ profile }: { profile: UserProfile }) {
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('unsupported')
+  const [registered, setRegistered] = useState(false)
 
   useEffect(() => {
     if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) return
     setPermission(Notification.permission)
-    if (Notification.permission === 'granted') registerToken(profile.uid).catch((err) => console.error('Push setup failed:', err))
+    if (Notification.permission === 'granted') {
+      registerToken(profile.uid).then(() => setRegistered(true)).catch((err) => console.error('Push setup failed:', err))
+    }
   }, [profile.uid])
 
   const enable = useCallback(async () => {
     const result = await Notification.requestPermission()
     setPermission(result)
-    if (result === 'granted') await registerToken(profile.uid).catch((err) => console.error('Push setup failed:', err))
+    if (result === 'granted') {
+      try {
+        await registerToken(profile.uid)
+        setRegistered(true)
+        window.alert('Notifications are on for this device.')
+      } catch (err) {
+        console.error('Push setup failed:', err)
+        // No dev console on a phone, so surface the reason on screen.
+        window.alert(`Could not turn on notifications: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    }
   }, [profile.uid])
 
-  if (permission !== 'default') return null
+  // Show the bell until this device is actually registered (also covers
+  // permission already granted but token registration having failed).
+  if (permission === 'unsupported' || permission === 'denied' || registered) return null
   return <button className="icon-button" type="button" onClick={enable} aria-label="Turn on message notifications" title="Turn on message notifications"><Bell /></button>
 }
