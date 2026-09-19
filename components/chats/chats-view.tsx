@@ -54,8 +54,7 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
     () => query(collection(db, 'conversations'), where('participantIds', 'array-contains', profile.uid), orderBy('lastMessageAt', 'desc')),
     [profile.uid],
   )
-  const { data: conversations, loading: conversationsLoading } = useCollection<ConversationDoc>(conversationsQuery)
-  const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0] ?? null
+  const { data: allConversations, loading: conversationsLoading } = useCollection<ConversationDoc>(conversationsQuery)
 
   // Same reasoning as HomeView's `nowTick`: refresh the `>` bound every 60s
   // so a message that ages past 4h disappears from an open thread promptly,
@@ -65,6 +64,16 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
     const interval = setInterval(() => setNowTick(Date.now()), 60000)
     return () => clearInterval(interval)
   }, [])
+
+  // Conversation docs have no TTL of their own, only their messages do, so a
+  // chat whose last activity is older than the message TTL would linger in
+  // the list (with a stale lastMessage preview) over an empty thread. A null
+  // lastMessageAt is a just-written local serverTimestamp, i.e. fresh.
+  const conversations = useMemo(
+    () => allConversations.filter((c) => !c.lastMessageAt || c.lastMessageAt.toMillis() + MESSAGE_TTL_MS > nowTick),
+    [allConversations, nowTick],
+  )
+  const selected = conversations.find((c) => c.id === selectedId) ?? conversations[0] ?? null
 
   const messagesQuery = useMemo(
     () => selected
@@ -127,6 +136,12 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
           lastMessageAt: serverTimestamp(),
           lastReadAt: {},
         })
+      } else {
+        const last = existing.data().lastMessageAt as Timestamp | null
+        if (last && last.toMillis() + MESSAGE_TTL_MS <= Date.now()) {
+          // Expired chat being reopened: reset it so it reappears in the list.
+          await updateDoc(ref, { lastMessage: '', lastMessageAt: serverTimestamp() })
+        }
       }
       setSelectedId(id)
     } catch (err) {
