@@ -318,7 +318,7 @@ function PostCard({ post, profile, allUsers, nowTick, activeReaction, setActiveR
   return <article className="post-card card">
     <div className="post-header">
       <Avatar profile={{ name: post.authorName, initials: post.authorInitials }} />
-      <div className="post-byline"><strong>{post.authorName}</strong><span>{post.authorProgram} · {RESIDENT_TYPE_LABELS[post.authorResidentType]}</span><small>{timeAgo(post.createdAt)} · <span className="public-dot">●</span> Housemates</small></div>
+      <div className="post-byline"><strong>{post.authorName}</strong><span>{post.authorProgram} · {RESIDENT_TYPE_LABELS[post.authorResidentType]}</span><small>{timeAgo(post.createdAt)}</small></div>
       {post.authorId === myUid && (
         <div className="post-menu-wrap">
           <button className="more-button" type="button" onClick={() => setMenuOpen((v) => !v)}><MoreHorizontal /></button>
