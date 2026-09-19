@@ -170,7 +170,7 @@ export function ChatsView({ profile, pendingChatWith, onConsumePendingChat }: {
           <span><strong>{otherName}</strong><small>{chat.lastMessage || 'Say hi!'}</small></span>
         </button>
       })}
-      {!conversationsLoading && conversations.length === 0 && <p className="load-more">Go to Friends to message someone.</p>}
+      {!conversationsLoading && conversations.length === 0 && <p className="load-more">Go to Residents to message someone.</p>}
     </section>
     {selected ? (() => {
       const otherUid = selected.participantIds.find((uid) => uid !== profile.uid) ?? selected.participantIds[0]

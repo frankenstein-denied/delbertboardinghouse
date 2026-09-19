@@ -87,16 +87,3 @@ export interface CommentDoc {
   createdAt: Timestamp | null
   expiresAt: Timestamp
 }
-
-export type FriendRequestStatus = 'pending' | 'accepted' | 'ignored'
-
-export interface FriendRequestDoc {
-  fromUid: string
-  toUid: string
-  status: FriendRequestStatus
-  // Nullable: onSnapshot can deliver this doc (the latency-compensated local
-  // write) before the serverTimestamp() round-trip resolves it to a real
-  // value — callers deriving a relative/absolute time from this must
-  // null-guard rather than assume it's always set.
-  createdAt: Timestamp | null
-}
