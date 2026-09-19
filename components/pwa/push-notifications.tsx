@@ -9,6 +9,26 @@ import type { UserProfile } from '@/lib/types'
 
 const SW_SCOPE = '/firebase-cloud-messaging-push-scope'
 
+// pushManager.subscribe() throws "no active service worker" if the worker is
+// still installing, which is always the case on a first-ever registration.
+function waitUntilActive(registration: ServiceWorkerRegistration) {
+  return new Promise<void>((resolve, reject) => {
+    if (registration.active) return resolve()
+    const worker = registration.installing ?? registration.waiting
+    if (!worker) return reject(new Error('Push service worker failed to install'))
+    const timeout = setTimeout(() => reject(new Error('Push service worker took too long to activate')), 15000)
+    worker.addEventListener('statechange', () => {
+      if (worker.state === 'activated') {
+        clearTimeout(timeout)
+        resolve()
+      } else if (worker.state === 'redundant') {
+        clearTimeout(timeout)
+        reject(new Error('Push service worker failed to install'))
+      }
+    })
+  })
+}
+
 async function registerToken(uid: string) {
   if (!(await isSupported())) throw new Error('Push is not supported in this browser')
   const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
@@ -20,6 +40,7 @@ async function registerToken(uid: string) {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? '',
   })
   const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${params}`, { scope: SW_SCOPE })
+  await waitUntilActive(registration)
   const token = await getToken(getMessaging(app), { vapidKey, serviceWorkerRegistration: registration })
   if (!token) throw new Error('FCM returned no token')
   // One doc per device token, private to its owner (see firestore.rules); the
