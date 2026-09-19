@@ -35,11 +35,14 @@ async function registerToken(uid: string) {
  * push isn't supported/configured or is already on/blocked.
  */
 export function PushNotifications({ profile }: { profile: UserProfile }) {
-  const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('unsupported')
+  const [permission, setPermission] = useState<NotificationPermission | 'unsupported' | 'checking'>('checking')
   const [registered, setRegistered] = useState(false)
 
   useEffect(() => {
-    if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) return
+    if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+      setPermission('unsupported')
+      return
+    }
     setPermission(Notification.permission)
     if (Notification.permission === 'granted') {
       registerToken(profile.uid).then(() => setRegistered(true)).catch((err) => console.error('Push setup failed:', err))
@@ -47,6 +50,14 @@ export function PushNotifications({ profile }: { profile: UserProfile }) {
   }, [profile.uid])
 
   const enable = useCallback(async () => {
+    if (permission === 'unsupported') {
+      window.alert('This browser cannot receive push notifications. Use Chrome or Edge, or on iPhone install the app to the home screen first.')
+      return
+    }
+    if (permission === 'denied') {
+      window.alert('Notifications are blocked for this app. Open the site/app settings (Chrome menu → Site settings → Notifications, or Android Settings → Apps → this app → Notifications), allow them, then reload and tap the bell again.')
+      return
+    }
     const result = await Notification.requestPermission()
     setPermission(result)
     if (result === 'granted') {
@@ -60,10 +71,10 @@ export function PushNotifications({ profile }: { profile: UserProfile }) {
         window.alert(`Could not turn on notifications: ${err instanceof Error ? err.message : String(err)}`)
       }
     }
-  }, [profile.uid])
+  }, [profile.uid, permission])
 
   // Show the bell until this device is actually registered (also covers
   // permission already granted but token registration having failed).
-  if (permission === 'unsupported' || permission === 'denied' || registered) return null
+  if (permission === 'checking' || registered) return null
   return <button className="icon-button" type="button" onClick={enable} aria-label="Turn on message notifications" title="Turn on message notifications"><Bell /></button>
 }
